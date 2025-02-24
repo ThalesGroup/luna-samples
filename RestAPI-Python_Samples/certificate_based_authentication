@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+
+#*********************************************************************************
+#                                                                                *
+# This file is part of the "luna-samples" project.                               *
+#                                                                                *
+# The "luna-samples" project is provided under the MIT license (see the          *
+# following Web site for further details: https://mit-license.org/ ).            *
+#                                                                                *
+# Copyright © 2025 Thales Group                                                  *
+#                                                                                *
+#*********************************************************************************
+
+# OBJECTIVE :
+# - This code demonstrates how to authenticate using certificate-based authentication.
+# - It is assumed that the user you're trying to authenticate already has a certificate assigned.
+# - This sample uses RSA cryptographic objects, but you're welcome to modify it to support other algorithms.
+
+
+import sys
+import base64
+import requests
+import urllib3
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
+from cryptography import x509
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+
+
+# checks for required arguments.
+if (len(sys.argv)!=5):
+	print ()
+	print ("Usage:-")
+	print ("./certificate_based_authentication <appliance username> <hsm_hostname_or_ip> <user_cert_file> <user_key_file>")
+	print ()
+	quit()
+
+
+
+
+username = sys.argv[1] # appliance username
+hostname = sys.argv[2] # appliance hostname or ip address.
+user_cert_file = sys.argv[3] # user certificate file.
+user_key_file = sys.argv[4] # user private key file.
+
+header = {'Content-type': 'application/vnd.safenetinc.lunasa+json;version='} # Header describing the content type.
+url = "https://" + hostname + ":8443/auth/login/challenge" # REST-API endpoint.
+
+
+
+
+# Reads Private Key from a file.
+with open(user_key_file, "rb") as file:
+	private_key_data = file.read()
+	file.close()
+private_key = load_pem_private_key(private_key_data, password=None)
+
+
+
+
+# Reads certificate from a file.
+with open(user_cert_file, "r") as file:
+	cert_data = file.read()
+	file.close()
+
+
+
+
+# Formats user certificate
+cert_data = cert_data.replace('\n','')
+cert_data = cert_data.replace('-----BEGIN CERTIFICATE-----', '-----BEGIN CERTIFICATE-----\\n')
+cert_data = cert_data.replace('-----END CERTIFICATE-----', '\\n-----END CERTIFICATE-----')
+
+
+
+
+# Posts username and user certificate to Luna REST-API server.
+post_data = '{"username": "' + username + '", "certificate": "' + cert_data + '"}'
+response = requests.post(url, post_data, headers=header, verify=False)
+
+
+
+
+# Reads the server certificate, challenge and nonce from the response.
+data = response.json()
+server_cert = data['certificate']
+challenge = base64.b64decode(data['challenge'])
+nonce = base64.b64decode(data['nonce'])
+
+
+
+
+# Decrypt the challenge using user's private key.
+# XOR decoded challenge and nonce.
+decrypted_challenge = private_key.decrypt(challenge, padding.PKCS1v15())
+xored_challenge = bytearray(b'')
+for ctr in range(len(decrypted_challenge)):
+	xored_challenge.append(decrypted_challenge[ctr] ^ nonce[ctr])
+
+
+
+
+# Encrypts the xored challenge using server certificate, and base64 encode the encrypted challenge response.
+server_cert = server_cert.replace('\\n','\n')
+public_key =  x509.load_pem_x509_certificate(server_cert.encode('utf-8')).public_key()
+encrypted_challenge = base64.b64encode(public_key.encrypt(bytes(xored_challenge), padding.PKCS1v15()))
+
+
+
+
+# Posts the solved challenge to Luna RestAPI server.
+post_data = '{"challengeResponse": "' + encrypted_challenge.decode('utf-8') + '"}'
+url = "https://" + hostname + ":8443/auth/login/basic"
+response = requests.post(url, post_data, headers=header, verify=False)
+if (response.status_code==204):
+	print ("Login successful.\n")
+else:
+	print ("Certificate based login failed!", response.status_code)
+auth_session_cookie = response.cookies
+
+
+
+
+# Check if other REST-API endpoints can be accessed or not.
+url = "https://" + hostname + ":8443/api/lunasa/"
+response = requests.get(url, headers=header, cookies=auth_session_cookie, verify=False)
+hsm_info = response.json()
+print ("You're now connected to HSM with Software version :", hsm_info['version'])
+
+
+
+
+# Deletes the authenticated session before exiting.
+url = "https://" + hostname + ":8443/auth/session"
+response = requests.delete(url, headers=header, cookies=auth_session_cookie, verify=False)
+print("\nExiting...\n")

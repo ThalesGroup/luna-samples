@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+#*********************************************************************************
+#                                                                                *
+# This file is part of the "luna-samples" project.                               *
+#                                                                                *
+# The "luna-samples" project is provided under the MIT license (see the          *
+# following Web site for further details: https://mit-license.org/ ).            *
+#                                                                                *
+# Copyright © 2025 Thales Group                                                  *
+#                                                                                *
+#*********************************************************************************
+
+
+# OBJECTIVE :
+# - This code demonstrates how to retrieve a list of all partitions from a Luna Network HSM using Luna RestAPI.
+
+
+import sys
+import os
+import requests
+import base64
+import urllib3
+import getpass
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+if len(sys.argv) != 3:
+	print ("\nusage :-")
+	print ("./partition_list <HSM_IP_OR_HOST> <appliance_username>\n")
+	quit()
+else:
+	hostname = sys.argv[1]
+	username = sys.argv[2]
+	password = getpass.getpass(prompt="["+username+"] Password : ")
+	auth = username + ":" + password
+
+authString = base64.b64encode(bytes(auth, 'utf-8')).decode("ascii")
+header = {'Content-type': 'application/vnd.safenetinc.lunasa+json;version=', 'Authorization': 'Basic %s' % authString}
+
+
+
+
+# Opens a private session.
+print ("Connecting to Luna HSM : [",hostname,"]\n")
+try:
+	url = "https://"+hostname+":8443/auth/session"
+	response = requests.post(url, headers=header, verify=False)
+	session_cookie = response.cookies
+except OSError as osErr:
+	print ("\tFailed to connect to : " + hostname)
+	print ("\tReason : ", osErr)
+	quit()
+if response.status_code!=204:
+	print ("Failed to open a session with : ", hostname)
+	quit()
+
+
+
+
+# Gets the HSM serial number.
+url = "https://" + hostname + ":8443/api/lunasa/hsms"
+response = requests.get(url, headers=header, verify=False, cookies=session_cookie)
+hsmSerial = (response.json())["hsms"][0]['id']
+
+
+
+
+# Get partition list
+url = "https://" + hostname + ":8443/api/lunasa/hsms/" + hsmSerial + "/partitions"
+response = requests.get(url, headers=header, verify=False, cookies=session_cookie)
+partitions = response.json()['partitions']
+table_header = "{:<15} {:<25} {:<15} {}"
+print (table_header.format("SERIAL", "NAME", "STATE", "VERSION"))
+for partition in partitions:
+	partition_serial = partition['id']
+	url = "https://" + hostname + ":8443" + partition['url']
+	response = requests.get(url, headers=header, verify=False, cookies=session_cookie)
+	partitionInfo = response.json()
+	partition_name = partitionInfo['name']
+	partition_state = partitionInfo['state']
+	partition_version = partitionInfo['version']
+	display_info = "{:<15} {:<25} {:<15} {}"
+	print (display_info.format(partition_serial, partition_name, partition_state, partition_version))
+
+
+
+
+
+# Delete private session
+url = "https://" + hostname + ":8443/auth/session"
+response = requests.delete(url, headers=header, verify=False, cookies=session_cookie)
+
+print()

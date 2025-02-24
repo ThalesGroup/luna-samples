@@ -32,9 +32,11 @@ Features -
 
 | Directory Name  | Description   |
 | --- | --- |
-| C_Samples | Contains samples written in C language. |
-| LunaJSP_Samples | Contains Java based samples that uses LunaProvider (Luna JSP). |
-| RestAPI_Python | Contains Python3 based RESTAPI samples for Luna Network HSM, to demonstrate the execution of some administrative tasks.|
+| C_Samples | Pkcs11 samples written in C language. |
+| LunaJSP_Samples | Java samples that uses LunaProvider (Luna JSP). |
+| RestAPI-Python_Samples | Python3 based Luna REST-API samples for Luna Network HSM. |
+| Python-PKCS11_Samples | Python3 based samples to demonstrate how to use python-pkcs11. |
+| Luna-FM_Samples | additional samples codes to demonstrate and test FM capability of Luna HSM. |
 
 <br><br>
 

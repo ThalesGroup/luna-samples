@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+
+#*********************************************************************************
+#                                                                                *
+# This file is part of the "luna-samples" project.                               *
+#                                                                                *
+# The "luna-samples" project is provided under the MIT license (see the          *
+# following Web site for further details: https://mit-license.org/ ).            *
+#                                                                                *
+# Copyright © 2025 Thales Group                                                  *
+#                                                                                *
+#*********************************************************************************
+
+# OBJECTIVE :
+# - This code displays a list of users in a Luna Network HSM using Rest API.
+
+
+import sys
+import os
+import requests
+import base64
+import urllib3
+import getpass
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+
+# Prints the correct syntax to execute this code.
+if len(sys.argv) != 3:
+	print ("\nusage :-")
+	print ("./user_list <HSM_IP_OR_HOST> <appliance_username>\n")
+	quit()
+else:
+	hostname = sys.argv[1]
+	username = sys.argv[2]
+	password = getpass.getpass(prompt="["+ username + "] Password : ")
+	auth = username + ":" + password
+
+authString = base64.b64encode(bytes(auth, 'utf-8')).decode("ascii")
+url = "https://"+hostname+":8443/users"
+header = {'Content-type': 'application/vnd.safenetinc.lunasa+json;version=', 'Authorization': 'Basic %s' % authString}
+response = 0
+
+
+
+
+print ("Connecting to Luna HSM : [",hostname,"]\n")
+try:
+	response = requests.get(url, headers=header, verify=False)
+except OSError as osErr:
+	print("\tFailed to connect to :"+hostname)
+	print("\tReason: ", osErr)
+	quit()
+
+if response.status_code==401:
+	print("Login failed.")
+	quit()
+
+if response.status_code!=200:
+	print("Response code :",response.status_code)
+	quit()
+
+
+
+# Display list of users.
+user_list = response.json()['users']
+table_header = "{:>10} {:>10} {:>15} {:>15} {:>25} {:>25}"
+print (table_header.format("USERNAME", "ROLE", "STATUS", "CHANGEABLE", "FULL NAME", "EMAIL ADDRESS"))
+print ("-"*95)
+
+for user in user_list:
+	url = "https://"+hostname+":8443/users/"+user['id']
+	response = requests.get(url, headers=header, verify=False)
+	data = response.json();
+	user_info = "{:>10} {:>10} {:>15} {:>15} {:>25} {:>25}"
+	user_id = data['userId']
+	user_role = data['role']
+	status = data['status']
+	changeable = str(data['changeable'])
+	full_name = data['fullName']
+	email_address = data['email']
+	print(user_info.format(user_id, user_role, status, changeable, full_name, email_address))
+
+print ()

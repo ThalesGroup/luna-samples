@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+
+#*********************************************************************************
+#                                                                                *
+# This file is part of the "luna-samples" project.                               *
+#                                                                                *
+# The "luna-samples" project is provided under the MIT license (see the          *
+# following Web site for further details: https://mit-license.org/ ).            *
+#                                                                                *
+# Copyright © 2025 Thales Group                                                  *
+#                                                                                *
+#*********************************************************************************
+
+
+# OBJECTIVE :
+# - This code demonstrates how to assign a certificate to a user account.
+# - For certificate-based authentication to work, a user must have a certificate assigned to their account.
+
+import sys
+import os
+import requests
+import base64
+import urllib3
+import getpass
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+
+
+# prints the correct syntax to execute this code.
+if len(sys.argv) != 3:
+	print ("\nusage :-")
+	print ("./user_set_certificate <HSM_IP_OR_HOST> <appliance_username>\n")
+	quit()
+else:
+	hostname = sys.argv[1]
+	username = sys.argv[2]
+	password = getpass.getpass(prompt="["+ username + "] Password : ")
+	auth = username + ":" + password
+
+authString = base64.b64encode(bytes(auth, 'utf-8')).decode("ascii")
+url = "https://"+hostname+":8443/users"
+header = {'Content-type': 'application/vnd.safenetinc.lunasa+json;version=', 'Authorization': 'Basic %s' % authString}
+response = 0
+
+
+
+
+# Asks for the username and the certificate filename to use.
+# Code reads the certificate file, formats it, and assigns it to the user.
+print ("Connecting to Luna HSM : [",hostname,"]\n")
+try:
+	user_id = input("User ID : ")
+	certificate_file_name = input("Certificate filename : ")
+	with open(certificate_file_name, "r") as file:
+		cert_data = file.read()
+
+	cert_data = cert_data.replace('\n','')
+	cert_data = cert_data.replace('-----BEGIN CERTIFICATE-----', '-----BEGIN CERTIFICATE-----\\n')
+	cert_data = cert_data.replace('-----END CERTIFICATE-----', '\\n-----END CERTIFICATE-----')
+	url = "https://"+hostname+":8443/users/" + user_id + "/certificates"
+	data = '{"certificate": "' + cert_data + '"}'
+	response = requests.post(url, data, headers=header, verify=False)
+except OSError as osErr:
+	print("\tFailed to connect to :"+hostname)
+	print("\tReason: ", osErr)
+	quit()
+
+if response.status_code==401:
+	print("\nLogin failed.")
+	quit()
+
+if response.status_code!=204:
+	print("\nAssigning certificate failed. Response code :",response.status_code)
+	quit()
+else:
+	print ("\nCertificate assigned to user :", user_id)
+
+print ()
