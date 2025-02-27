@@ -29,8 +29,14 @@ These samples may require these packages to be installed.
 | enumerate_slots.py | demonstrates how to display token-ready slots. |
 | login_logout.py | demonstrates how to login using crypto officer a.k.a CKU_USER. |
 | generate_aes_key.py | demonstrates how to generate an AES key. |
-| secret_key_wrap_demo.py | demonstrates how to wrap a secret key using another secret key. |
-| secret_key_unwrap_demo.py | demonstrates how to unwrap a wrapped secret key. |
+| list_objects.py | demonstrates how to list objects in a partition. |
+| wrap_secret_key_using_aes.py | demonstrates how to wrap a secret key using an AES key. |
+| wrap_secret_key_using_rsa_oaep_sha1.py | demonstrates how to wrap a secret key using RSA-OAEP-MGF-SHA1. |
+| wrap_secret_key_using_rsa_oaep_sha256.py | demonstrates how to wrap a secret key using RSA-OAEP-MGF-SHA256. |
+| unwrap_secret_key_using_aes.py | demonstrates how to unwrap a wrapped secret key using an AES-key. |
+| unwrap_secret_key_using_rsa_oaep_sha1.py | demonstrates how to unwrap using RSA-OAEP-MGF-SHA1. |
+| unwrap_secret_key_using_rsa_oaep_sha256.py | demonstrates how to unwrap using RSA-OAEP-MGF-SHA1. |
+
 
 
 <BR><BR>

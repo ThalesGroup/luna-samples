@@ -12,6 +12,7 @@
 | misc | samples demonstrating various miscellaneous tasks. | 8 |
 | Connect_and_Disconnect.c | a sample that shows how to connect to a Luna HSM and disconnect from it. | - |
 
+<br>
 
 ### Compiling the code
 
