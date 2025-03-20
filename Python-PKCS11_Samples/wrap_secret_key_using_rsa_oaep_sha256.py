@@ -25,6 +25,7 @@ from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
 
 print ("\nwrap_secret_key_using_rsa_oaep_sha256.py\n")
 
+
 # Checks for all required arguments.
 if len(sys.argv)!=5:
 	print ("Usage:")
@@ -94,3 +95,6 @@ except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
+except:
+	print (sys.exc_info()[0])
+	print ()

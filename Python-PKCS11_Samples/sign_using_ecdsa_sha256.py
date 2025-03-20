@@ -11,37 +11,31 @@
 #*********************************************************************************
 
 # OBJECTIVE:
-# - This sample code demonstrates how to generate an AES key.
-# - It allows you to set your own key label and choose a key size.
+# - This sample code demonstrates use an ecdsa keypair to digitally sign a text.
+# - Text will be signed using ecdsa-sha256 mechanism.
 
 
 import sys
 import os
 import getpass
 import pkcs11
-from pkcs11 import KeyType
-from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
+from pkcs11 import Attribute, KeyType, Mechanism
+from pkcs11.util.ec import encode_named_curve_parameters
+from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken, AttributeValueInvalid
 
-print("\ngenerate_aes_key.py\n")
+print("\nsign_using_ecdsa_sha256.py\n")
 
 
 # Prints the syntax for executing this code.
-if len(sys.argv)!=4:
+if len(sys.argv)!=2:
 	print ("Usage:")
-	print ("./generate_aes_key.py <slot_label> <secret_key_label> <keysize (128/192/256)>")
+	print ("./sign_using_ecdsa_sha256.py <slot_label>")
 	print ("\nExample:")
-	print ("./generate_aes_key.py SP_SKS_SEHSM3 myAesKey 128\n")
+	print ("./sign_using_ecdsa_sha256.py SP_SKS_SEHSM3\n")
 	quit()
-
 
 slot_label = sys.argv[1]
-secret_key_label = sys.argv[2]
-key_size = int(sys.argv[3])
-
-if ( (key_size!=128) and (key_size!=192) and (key_size!=256) ): # Checks for the AES keysize.
-	print("AES key size invalid.\n")
-	quit()
-
+curve_id = "secp384r1"
 
 # Reads P11_LIB environment variable.
 try:
@@ -53,6 +47,7 @@ except:
 
 
 co_pass = getpass.getpass(prompt="Crypto officer password: ")
+plaintext = input("Enter plaintext to sign : ")
 
 try:
 	p11 = pkcs11.lib(pkcs11_library) # Loads pkcs11 library.
@@ -61,11 +56,29 @@ try:
 	p11token = p11.get_token(token_label=slot_label) # Finds the specified slot.
 	print("Token found : ", slot_label)
 
-	with p11token.open(user_pin=co_pass) as p11session: # Opens a new session and logs in as crypto officer.
+	with p11token.open(user_pin=co_pass) as p11session: #Opens a new session and logs in as crypto officer.
 		print("Login success.")
-		secret_key = p11session.generate_key(pkcs11.KeyType.AES, key_size, store=True, label=secret_key_label) # Generates an AES key as token object.
-		print ("AES-256 key generated with label : ", secret_key_label)
+
+		# Generates ECParam
+		eccParam = p11session.create_domain_parameters(KeyType.EC, {Attribute.EC_PARAMS: encode_named_curve_parameters(curve_id)}, local=True)
+
+		# Generates ECDSA keypair using the param.
+		ecc_pub, ecc_pri = eccParam.generate_keypair(store=False)
+		print ("ECDSA key pair generated.")
+
+		signature = ecc_pri.sign(plaintext, mechanism=Mechanism.ECDSA_SHA256)
+		print ("Plaintext signed.")
+
+		if(ecc_pub.verify(plaintext, signature, mechanism=Mechanism.ECDSA_SHA256)):
+			print ("Signature verified.")
+		else:
+			print ("Signature verification failed.")
+
 		print ()
+		print ("Plain text 	: ", plaintext)
+		print ("Plain text (Hex): ", plaintext.encode().hex())
+		print ("Signature	: ", signature.hex())
+
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:

@@ -13,7 +13,7 @@
 # OBJECTIVE:
 # - This sample code demonstrates how to unwrap an encrypted secret key (wrapped key) from a file onto HSM.
 # - An rsa-2048 private key is used for unwrapping the encrypted secret.
-# - For unwrapping, python-pkcs11 defaults to CKM_RSA_PKCS_OAEP with MGF1.SHA256 as the oaep parameter.
+# - For unwrapping, this sample uses CKM_RSA_PKCS_OAEP with MGF1.SHA256 as the oaep parameter.
 
 
 import sys
@@ -72,7 +72,7 @@ try:
 			wrapping_key = p11session.get_key(label=private_key_label)
 			print ("\t> Wrapping key found : ", private_key_label)
 		except:
-			print (private_key_label, " not found.")
+			print (private_key_label, " not found.\n")
 
 		try:
 			with open(wrapped_key_file, "rb") as file:
@@ -93,5 +93,6 @@ except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-	print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

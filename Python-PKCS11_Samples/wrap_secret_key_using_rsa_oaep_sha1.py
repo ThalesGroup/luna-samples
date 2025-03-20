@@ -93,3 +93,6 @@ except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
+except:
+	print (sys.exc_info()[0])
+	print ()

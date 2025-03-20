@@ -11,26 +11,30 @@
 #*********************************************************************************
 
 # OBJECTIVE:
-# - This sample code demonstrate how to wrap a secret key using another wrapping key (also a secret key).
-# - The encrypted key bytes will be written to a file.
-
-
+# - This sample demonstrates how to wrap a secret key using an RSA public key.
+# - It uses rsa-pkcs1 mechanism to wrap secret key.
+# - The target is an AES-256 key.
 
 import sys
 import os
 import getpass
 import pkcs11
+from pkcs11.mechanisms import Mechanism
 from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
 
-print ("\nsecret_key_wrap_demo.py\n")
 
+print ("\nwrap_secret_key_using_rsa_pkcs1.py\n")
+
+# Checks for all required arguments.
 if len(sys.argv)!=5:
 	print ("Usage:")
-	print ("./secret_key_wrap_demo.py <slot_label> <wrapping_key_label> <key_to_wrap_label> <output_file_name>\n")
+	print ("./wrap_secret_key_using_rsa_pkcs1.py <slot_label> <rsa_public_key_label> <aes_key_label> <output_filename>\n")
 	print ("Example:")
-	print ("./secret_key_wrap_demo.py SP_SKS_SEHSM3 MasterKey DataKey DataKey.dat\n")
+	print ("./wrap_secret_key_using_rsa_pkcs1.py SP_SKS_SEHSM3 aws-public-key BYOK-AWS-AES BYOK.dat\n")
 	quit()
 
+
+# Checks if the P11_LIB environment variable is set.
 try:
 	pkcs11_library = os.environ['P11_LIB']
 except:
@@ -38,13 +42,16 @@ except:
 	print("> export P11_LIB=/usr/safenet/lunaclient/lib/libCryptoki2_64.so\n")
 	quit()
 
+
+# Stores all arguments in a variable.
 slot_label = sys.argv[1]
-wrapping_key_label = sys.argv[2]
-key_to_wrap_label = sys.argv[3]
+public_key_label = sys.argv[2]
+aes_key_label = sys.argv[3]
 outfile = sys.argv[4]
 co_pass = getpass.getpass(prompt="Crypto officer password: ")
 
 
+# Loads pkcs11 library, logs into the specified slot, and performs C_Wrap
 try:
 	p11 = pkcs11.lib(pkcs11_library)
 	print ("PKCS11 library found at : ", pkcs11_library)
@@ -56,18 +63,24 @@ try:
 		print ("\t> Login success.")
 
 		try:
-			wrapping_key = p11session.get_key(label=wrapping_key_label)
-			print ("\t> Wrapping key found : ", wrapping_key_label)
+			# Search for the public key.
+			wrapping_key = p11session.get_key(label=public_key_label)
+			print ("\t> Public key found : ", public_key_label)
 		except:
-			print (wrapping_key_label, " not found.\n")
+			print (public_key_label, " not found.\n")
 
 		try:
-			key_to_wrap = p11session.get_key(label=key_to_wrap_label)
-			print ("\t> Key to wrap found : ", key_to_wrap_label)
+			# Search for the AES key.
+			key_to_wrap = p11session.get_key(label=aes_key_label)
+			print ("\t> Key to wrap found : ", aes_key_label)
 		except:
-			print (key_to_wrap_label, " not found.\n")
+			print (aes_key_label, " not found.\n")
 
-		wrapped_key_data = wrapping_key.wrap_key(key_to_wrap)
+		# wrap aes key using RSA public key.
+		wrapped_key_data = wrapping_key.wrap_key(key_to_wrap, mechanism=Mechanism.RSA_PKCS)
+
+
+		# Write wrapped data to file.
 		try:
 			with open(outfile, "wb") as file:
 				file.write(wrapped_key_data)
@@ -76,10 +89,10 @@ try:
 		except Exception as err:
 			print ("Writing wrapped key to ", outfile, " failed. REASON: ", err, "\n")
 
-
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-	print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

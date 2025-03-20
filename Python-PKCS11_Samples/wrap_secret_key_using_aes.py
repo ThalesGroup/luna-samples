@@ -24,6 +24,8 @@ from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
 
 print ("\nwrap_secret_key_using_aes.py\n")
 
+
+# Prints the syntax for executing this code.
 if len(sys.argv)!=5:
 	print ("Usage:")
 	print ("./wrap_secret_key_using_aes.py <slot_label> <wrapping_key_label> <key_to_wrap_label> <output_file_name>\n")
@@ -31,6 +33,8 @@ if len(sys.argv)!=5:
 	print ("./wrap_secret_key_using_aes.py SP_SKS_SEHSM3 MasterKey DataKey DataKey.dat\n")
 	quit()
 
+
+# Reads P11_LIB environment variable.
 try:
 	pkcs11_library = os.environ['P11_LIB']
 except:
@@ -46,28 +50,30 @@ co_pass = getpass.getpass(prompt="Crypto officer password: ")
 
 
 try:
-	p11 = pkcs11.lib(pkcs11_library)
+	p11 = pkcs11.lib(pkcs11_library) # Loads pkcs11 library.
 	print ("PKCS11 library found at : ", pkcs11_library)
 
-	p11token = p11.get_token(token_label=slot_label)
+	p11token = p11.get_token(token_label=slot_label) # Finds the specified slot.
 	print("Token found : ", slot_label)
 
-	with p11token.open(user_pin=co_pass) as p11session:
+	with p11token.open(user_pin=co_pass) as p11session: # Opens a new session and logs in as crypto officer.
 		print ("\t> Login success.")
 
 		try:
-			wrapping_key = p11session.get_key(label=wrapping_key_label)
+			wrapping_key = p11session.get_key(label=wrapping_key_label) # gets the handle for the wrapping key.
 			print ("\t> Wrapping key found : ", wrapping_key_label)
 		except:
 			print (wrapping_key_label, " not found.\n")
 
 		try:
-			key_to_wrap = p11session.get_key(label=key_to_wrap_label)
+			key_to_wrap = p11session.get_key(label=key_to_wrap_label) # gets the handle for the key to wrap.
 			print ("\t> Key to wrap found : ", key_to_wrap_label)
 		except:
 			print (key_to_wrap_label, " not found.\n")
 
-		wrapped_key_data = wrapping_key.wrap_key(key_to_wrap)
+		wrapped_key_data = wrapping_key.wrap_key(key_to_wrap) # performs key wrapping.
+
+		# writes wrapped key to a file.
 		try:
 			with open(outfile, "wb") as file:
 				file.write(wrapped_key_data)
@@ -81,5 +87,6 @@ except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-	print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

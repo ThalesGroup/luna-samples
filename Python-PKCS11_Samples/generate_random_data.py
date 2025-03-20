@@ -11,36 +11,28 @@
 #*********************************************************************************
 
 # OBJECTIVE:
-# - This sample code demonstrates how to generate an AES key.
-# - It allows you to set your own key label and choose a key size.
-
+# - This sample demonstrates how to generate random data.
 
 import sys
 import os
 import getpass
 import pkcs11
-from pkcs11 import KeyType
-from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
+from pkcs11.exceptions import PinIncorrect, NoSuchToken
 
-print("\ngenerate_aes_key.py\n")
+print ("./generate_random_bytes.py\n")
 
 
 # Prints the syntax for executing this code.
-if len(sys.argv)!=4:
+if len(sys.argv)!=3:
 	print ("Usage:")
-	print ("./generate_aes_key.py <slot_label> <secret_key_label> <keysize (128/192/256)>")
-	print ("\nExample:")
-	print ("./generate_aes_key.py SP_SKS_SEHSM3 myAesKey 128\n")
+	print ("./generate_random_data.py <slot_label> <data_size (bytes)>")
+	print ()
+	print ("Example:")
+	print ("./generate_random_data.py SEHSM2 32\n")
 	quit()
-
 
 slot_label = sys.argv[1]
-secret_key_label = sys.argv[2]
-key_size = int(sys.argv[3])
-
-if ( (key_size!=128) and (key_size!=192) and (key_size!=256) ): # Checks for the AES keysize.
-	print("AES key size invalid.\n")
-	quit()
+data_size = int(sys.argv[2])
 
 
 # Reads P11_LIB environment variable.
@@ -51,8 +43,7 @@ except:
 	print("> export P11_LIB=/usr/safenet/lunaclient/lib/libCryptoki2_64.so\n")
 	quit()
 
-
-co_pass = getpass.getpass(prompt="Crypto officer password: ")
+co_pass = getpass.getpass(prompt="Crypto Officer Password: ")
 
 try:
 	p11 = pkcs11.lib(pkcs11_library) # Loads pkcs11 library.
@@ -61,10 +52,11 @@ try:
 	p11token = p11.get_token(token_label=slot_label) # Finds the specified slot.
 	print("Token found : ", slot_label)
 
-	with p11token.open(user_pin=co_pass) as p11session: # Opens a new session and logs in as crypto officer.
+	with p11token.open(user_pin=co_pass) as p11session: #Opens a new session and logs in as crypto officer.
 		print("Login success.")
-		secret_key = p11session.generate_key(pkcs11.KeyType.AES, key_size, store=True, label=secret_key_label) # Generates an AES key as token object.
-		print ("AES-256 key generated with label : ", secret_key_label)
+		random_data = p11session.generate_random(data_size*8) # Generates random data using size specified as bits.
+		print (data_size, "bytes of random data generated.")
+		print ("Random Data (hex) :", random_data.hex())
 		print ()
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")

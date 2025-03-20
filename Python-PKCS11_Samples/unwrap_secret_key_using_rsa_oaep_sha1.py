@@ -65,17 +65,20 @@ try:
 		print ("\t> Login success.")
 
 		try:
-			wrapping_key = p11session.get_key(label=private_key_label)
+			wrapping_key = p11session.get_key(label=private_key_label) # Gets the handle for the wrapping key.
 			print ("\t> Wrapping key found : ", private_key_label)
 		except:
-			print (private_key_label, " not found.")
+			print (private_key_label, " not found.\n")
 
+
+		# Reads the encrypted key from a file.
 		try:
 			with open(wrapped_key_file, "rb") as file:
 				wrapped_key = file.read()
 				file.close()
 		except Exception as err:
 			print ("Reading ", wrapped_key_file, " failed. REASON: ", err)
+			print ()
 
 
 		try:
@@ -83,10 +86,12 @@ try:
 			print ("Key unwrapped successfully.\n")
 		except Exception as err:
 			print ("Unwrapping failed. Reason: ", err)
+			print ()
 
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-	print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

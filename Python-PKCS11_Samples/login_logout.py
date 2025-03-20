@@ -20,6 +20,9 @@ import getpass
 import pkcs11
 
 print ("\nlogin_logout.py\n")
+
+
+# Prints the syntax for executing this code.
 if len(sys.argv) != 2:
 	print ("usage :-")
 	print ("./login_logout.py <slot_label>")
@@ -28,6 +31,9 @@ if len(sys.argv) != 2:
 	quit()
 
 slot_label = sys.argv[1]
+
+
+# Reads P11_LIB environment variable.
 try:
 	pkcs11_library = os.environ['P11_LIB']
 except:
@@ -51,11 +57,12 @@ try:
 
 	# closes the session.
 	p11session.close()
-	print("Logout success.")
+	print("Logout success.\n")
 
 except pkcs11.exceptions.PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except pkcs11.exceptions.NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-        print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

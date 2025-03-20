@@ -25,6 +25,8 @@ from pkcs11.exceptions import PinIncorrect, NoSuchToken
 
 print("\nlist_objects.py\n")
 
+
+# Prints the syntax for executing this code.
 if len(sys.argv)!=3:
 	print ("Usage:")
 	print ("./list_objects.py <slot_label> -<OBJECT_TYPE>\n")
@@ -41,6 +43,8 @@ if len(sys.argv)!=3:
 slot_label = sys.argv[1]
 object_type = sys.argv[2]
 
+
+# Reads P11_LIB environment variable.
 try:
 	pkcs11_library = os.environ['P11_LIB']
 except:
@@ -53,13 +57,13 @@ co_pass = getpass.getpass(prompt="Crypto officer password: ")
 
 
 try:
-	p11 = pkcs11.lib(pkcs11_library)
+	p11 = pkcs11.lib(pkcs11_library) # Loads pkcs11 library.
 	print ("PKCS11 library found at : ", pkcs11_library)
 
-	p11token = p11.get_token(token_label=slot_label)
+	p11token = p11.get_token(token_label=slot_label) # Finds the specified slot.
 	print("Token found : ", slot_label)
 
-	with p11token.open(user_pin=co_pass) as p11session:
+	with p11token.open(user_pin=co_pass) as p11session: # Opens a new session and logs in as crypto officer.
 		print("Login success.")
 		if(object_type=="-cert"):
 			print ("Certificates:")
@@ -77,12 +81,13 @@ try:
 			print ("All objects:")
 			for p11_object in p11session.get_objects({Attribute.TOKEN: 1}): print("  -", p11_object.label)
 		else:
-			print ("Invalid search option used.")
+			print ("Invalid search option used.\n")
 
 
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
-except RuntimeError as rterr:
-	print (rterr)
+except:
+	print (sys.exc_info()[0])
+	print ()

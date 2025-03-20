@@ -28,15 +28,33 @@ These samples may require these packages to be installed.
 | --- | --- |
 | enumerate_slots.py | demonstrates how to display token-ready slots. |
 | login_logout.py | demonstrates how to login using crypto officer a.k.a CKU_USER. |
+| generate_random_data.py | demonstrates how to generate random data using Luna HSM's RNG. |
 | generate_aes_key.py | demonstrates how to generate an AES key. |
+| generate_aes_key2.py | demonstrates how to generate an AES key using user specified pkcs11 attributes. |
+| generate_rsa_keypair.py | demonstrates how to generate an RSA keypair. |
+| generate_rsa_keypair2.py | demonstrates how to generate an RSA keypair using user specified pkcs11 attributes. |
+| generate_ecdsa_keypair.py | demonstrates how to generate ECDSA keypair. |
 | list_objects.py | demonstrates how to list objects in a partition. |
+| sign_using_ecdsa_sha256.py | demonstrates signing using ecdsa-sha256. |
+| sign_using_ecdsa_sha512.py | demonstrates signing using ecdsa-sha512. |
+| sign_using_rsa.py | demonstrates signing using rsa-sha512. |
+| sign_using_rsa_pkcs1.py | demonstrates signing using rsa-pkcs1.|
+| sign_using_rsa_pss.py | demonstrates signing using rsa-pss. |
+| sign_using_rsa_pss_sha256.py | demonstrates signing using rsa-pss-sha256. |
+| sign_using_rsa_sha256.py | demonstrates signing using rsa-sha256. |
+| encrypt_using_aes-cbc-pad.py | demonstrates encryption using aes-cbc-pad. |
+| encrypt_using_aes-cbc.py | demonstrates encryption using aes-cbc. |
+| encrypt_using_aes-ecb.py | demonstrates encryption using aes-ecb. |
+| encrypt_using_rsa_oaep.py | demonstrates encryption using rsa-oaep. |
+| encrypt_using_rsa_pkcs1.py | demonstrates encryption using rsa-pkcs1. |
 | wrap_secret_key_using_aes.py | demonstrates how to wrap a secret key using an AES key. |
+| wrap_secret_key_using_rsa_pkcs1.py | demonstrates how to wrap a secret key using RSA-PKCS1. |
 | wrap_secret_key_using_rsa_oaep_sha1.py | demonstrates how to wrap a secret key using RSA-OAEP-MGF-SHA1. |
 | wrap_secret_key_using_rsa_oaep_sha256.py | demonstrates how to wrap a secret key using RSA-OAEP-MGF-SHA256. |
 | unwrap_secret_key_using_aes.py | demonstrates how to unwrap a wrapped secret key using an AES-key. |
+| unwrap_secret_key_using_rsa_pkcs1.py | demonstrates how to unwrap a secret using RSA-PKCS1. |
 | unwrap_secret_key_using_rsa_oaep_sha1.py | demonstrates how to unwrap using RSA-OAEP-MGF-SHA1. |
-| unwrap_secret_key_using_rsa_oaep_sha256.py | demonstrates how to unwrap using RSA-OAEP-MGF-SHA1. |
-
+| unwrap_secret_key_using_rsa_oaep_sha256.py | demonstrates how to unwrap using RSA-OAEP-MGF-SHA256. |
 
 
 <BR><BR>

@@ -11,35 +11,33 @@
 #*********************************************************************************
 
 # OBJECTIVE:
-# - This sample code demonstrates how to generate an AES key.
-# - It allows you to set your own key label and choose a key size.
+# - This sample code demonstrates how to generate RSA keypair.
+# - It allows you to set your own labels and choose a keypair size.
 
 
 import sys
 import os
 import getpass
 import pkcs11
-from pkcs11 import KeyType
-from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken
+from pkcs11 import Attribute, KeyType
+from pkcs11.exceptions import NoSuchKey, PinIncorrect, NoSuchToken, AttributeValueInvalid
 
-print("\ngenerate_aes_key.py\n")
+print("\ngenerate_rsa_keypair2.py\n")
 
 
 # Prints the syntax for executing this code.
 if len(sys.argv)!=4:
 	print ("Usage:")
-	print ("./generate_aes_key.py <slot_label> <secret_key_label> <keysize (128/192/256)>")
+	print ("./generate_rsa_keypair2.py <slot_label> <keypair_label> <keysize (BITS)>")
 	print ("\nExample:")
-	print ("./generate_aes_key.py SP_SKS_SEHSM3 myAesKey 128\n")
+	print ("./generate_rsa_keypair2.py SP_SKS_SEHSM3 testRSA 2048\n")
 	quit()
 
-
 slot_label = sys.argv[1]
-secret_key_label = sys.argv[2]
-key_size = int(sys.argv[3])
-
-if ( (key_size!=128) and (key_size!=192) and (key_size!=256) ): # Checks for the AES keysize.
-	print("AES key size invalid.\n")
+keypair_label = sys.argv[2]
+keypair_size = int(sys.argv[3])
+if ( (keypair_size<512) and (keypair_size>8192) ): # checks the key-size.
+	print("RSA keypair size invalid.\n")
 	quit()
 
 
@@ -54,6 +52,7 @@ except:
 
 co_pass = getpass.getpass(prompt="Crypto officer password: ")
 
+
 try:
 	p11 = pkcs11.lib(pkcs11_library) # Loads pkcs11 library.
 	print ("PKCS11 library found at : ", pkcs11_library)
@@ -63,13 +62,41 @@ try:
 
 	with p11token.open(user_pin=co_pass) as p11session: # Opens a new session and logs in as crypto officer.
 		print("Login success.")
-		secret_key = p11session.generate_key(pkcs11.KeyType.AES, key_size, store=True, label=secret_key_label) # Generates an AES key as token object.
-		print ("AES-256 key generated with label : ", secret_key_label)
+		# Attributes for the Private key.
+		private_key_attributes = {
+			Attribute.PRIVATE: True,
+			Attribute.TOKEN: True,
+			Attribute.SIGN: True,
+			Attribute.DECRYPT: True,
+			Attribute.UNWRAP: False,
+			Attribute.EXTRACTABLE: False,
+			Attribute.MODIFIABLE: False,
+			Attribute.LABEL: keypair_label+"-private",
+		}
+
+		# Atrributes for the Public key.
+		public_key_attributes = {
+			Attribute.TOKEN: True,
+			Attribute.PRIVATE: False,
+			Attribute.VERIFY: True,
+			Attribute.ENCRYPT: True,
+			Attribute.WRAP: False,
+			Attribute.LABEL: keypair_label+"-public"
+		}
+
+		# generates rsa keypair as token objects.
+		rsa_pub, rsa_pri = p11session.generate_keypair(pkcs11.KeyType.RSA, keypair_size, private_template=private_key_attributes, public_template=public_key_attributes)
+		print ("RSA key generated with label : ", keypair_label)
+		print ("\t > Private Key : ", rsa_pri)
+		print ("\t > Public Key : ", rsa_pub)
 		print ()
+
 except PinIncorrect:
 	print ("Incorrect crypto officer pin.\n")
 except NoSuchToken:
 	print ("Incorrect token label.\n")
+except AttributeValueInvalid:
+	print ("Attribute value invalid.\n")
 except:
 	print (sys.exc_info()[0])
 	print ()
