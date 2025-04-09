@@ -215,6 +215,10 @@ CA_SIMInsert_demo: sfnt_extension/CA_SIMInsert_demo.c
 	@mkdir -p bin/sfntExtension
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/sfntExtension/CA_SIMInsert_demo sfnt_extension/CA_SIMInsert_demo.c
 
+Per_Key_Authorization_demo: sfnt_extension/Per_Key_Authorization_demo.c
+	@mkdir -p bin/sfntExtension
+	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/sfntExtension/Per_Key_Authorization_demo sfnt_extension/Per_Key_Authorization_demo.c
+
 
 
 # Compile all sample codes.
@@ -259,7 +263,8 @@ MultiThread_Signing_demo List_Available_Slots
 
 
 # Compile and build all SafeNet extension samples.
-sfntExtension: Show_Partition_Policies CA_SIMInsert_demo CA_SIMExtract_demo
+sfntExtension: Show_Partition_Policies CA_SIMInsert_demo CA_SIMExtract_demo \
+Per_Key_Authorization_demo
 	@echo " - SafeNet Extension samples have build successfully. Executables are inside bin/sfntExtension directory."
 
 
@@ -332,6 +337,7 @@ list_samples:
 	@echo "- Show_Partition_Policies"
 	@echo "- CA_SIMExtract_demo"
 	@echo "- CA_SIMInsert_demo"
+	@echo "- Show_Partition_Policies.c
 
 help:
 	@echo

@@ -8,7 +8,7 @@
 | generating_keys | samples to demonstrates how to generate different types of cryptographic keys. | 10 |
 | encryption | samples to demonstrate how to perform encryption | 8 |
 | object_management | samples to demonstrate how to manage keys | 10 |
-| sfnt_extension | samples demonstrating various SafeNet function (Vendor Defined Functions). | 3 |
+| sfnt_extension | samples demonstrating various SafeNet function (Vendor Defined Functions). | 4 |
 | misc | samples demonstrating various miscellaneous tasks. | 8 |
 | Connect_and_Disconnect.c | a sample that shows how to connect to a Luna HSM and disconnect from it. | - |
 
