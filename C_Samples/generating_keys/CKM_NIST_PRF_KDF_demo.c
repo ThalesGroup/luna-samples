@@ -42,6 +42,7 @@ CK_FUNCTION_LIST *p11Func = NULL;
 CK_SESSION_HANDLE hSession = 0;
 CK_SLOT_ID slotId = 0; // slot id
 CK_BYTE *slotPin = NULL; // slot password
+CK_BYTE *baseKeyLabel = NULL; // Label of the base AES key.
 CK_OBJECT_HANDLE hDerived = 0;
 CK_OBJECT_HANDLE hMaster = 0;
 CK_PRF_KDF_PARAMS param;
@@ -108,6 +109,7 @@ void freeMem()
                 FreeLibrary(libHandle); // Close library handle on Windows.
         #endif
         free(slotPin);
+	free(baseKeyLabel);
 }
 
 
@@ -149,50 +151,49 @@ void disconnectFromLunaSlot()
 
 
 
-// This function generates an AES key which will used as a base key to derive other keys.
-void generateGenericKey()
+// This function finds the base key to be used for key derivation.
+void findBaseKey()
 {
-        CK_MECHANISM mech = {CKM_AES_KEY_GEN};
         CK_BBOOL yes = CK_TRUE;
-        CK_BBOOL no = CK_FALSE;
-        CK_ULONG keyLen = 32;
         CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
-        CK_BYTE label[] = "MasterKey_DELETE_ME";
+	CK_KEY_TYPE keyType = CKK_AES;
+	CK_OBJECT_HANDLE handles[1];
+	CK_ULONG objectCount = 0;
 
         CK_ATTRIBUTE attrib[] =
         {
                 {CKA_PRIVATE,   	&yes,           sizeof(CK_BBOOL)},
                 {CKA_TOKEN,             &yes,           sizeof(CK_BBOOL)},
-                {CKA_ENCRYPT,   	&no,            sizeof(CK_BBOOL)},
-                {CKA_DECRYPT,   	&no,            sizeof(CK_BBOOL)},
-                {CKA_WRAP,              &no,            sizeof(CK_BBOOL)},
-                {CKA_UNWRAP,    	&no,            sizeof(CK_BBOOL)},
-                {CKA_SENSITIVE, 	&yes,           sizeof(CK_BBOOL)},
-                {CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
-                {CKA_EXTRACTABLE,       &no,            sizeof(CK_BBOOL)},
-                {CKA_DERIVE,    	&yes,           sizeof(CK_BBOOL)},
-                {CKA_LABEL,             &label, 	sizeof(label)-1},
                 {CKA_CLASS,             &objClass,      sizeof(CK_OBJECT_CLASS)},
-                {CKA_VALUE_LEN, 	&keyLen,        sizeof(CK_ULONG)}
+		{CKA_KEY_TYPE,		&keyType,	sizeof(CK_KEY_TYPE)},
+		{CKA_LABEL,		baseKeyLabel,	strlen(baseKeyLabel)}
         };
-        CK_ULONG attribLen = sizeof(attrib)/sizeof(*attrib);
-        checkOperation(p11Func->C_GenerateKey(hSession, &mech, attrib, attribLen, &hMaster),"C_GenerateKey");
-	printf("\n> Base key generated.\n");
-	printf("  --> Handle : %lu\n", hMaster);
+
+	checkOperation(p11Func->C_FindObjectsInit(hSession, attrib, 5), "C_FindObjectsInit");
+	checkOperation(p11Func->C_FindObjects(hSession, handles, 1, &objectCount), "C_FindObjects");
+	if(objectCount==0)
+	{
+		printf("\nBase key [ %s ], not found.\n", baseKeyLabel);
+	}
+	else
+	{
+		hMaster = handles[0];
+		printf("  --> Base key found. Handle : %lu\n", hMaster);
+	}
 }
 
 
 // Initialize KDF-PRF params.
 void initParam()
 {
-	CK_BYTE paramLabel[] = "12345678";
-	CK_BYTE context[] = "12345678";
+	static CK_BYTE paramLabel[] = "12345678";
+	static CK_BYTE context[] = "12345678";
 
 	param.prfType = CK_NIST_PRF_KDF_AES_CMAC;
-	param.pLabel = (CK_BYTE*)&paramLabel;
-	param.ulLabelLen = sizeof(paramLabel);
+	param.pLabel = paramLabel;
+	param.ulLabelLen = sizeof(paramLabel)-1;
 	param.pContext = context;
-	param.ulContextLen = sizeof(context);
+	param.ulContextLen = sizeof(context)-1;
 	param.ulCounter = 1;
 	param.ulEncodingScheme = LUNA_PRF_KDF_ENCODING_SCHEME_1;
 }
@@ -203,15 +204,22 @@ void initParam()
 void deriveKey()
 {
 	initParam();
+
         CK_MECHANISM mech = {CKM_NIST_PRF_KDF, &param, sizeof(param)};
         CK_BBOOL yes = CK_TRUE;
         CK_BBOOL no = CK_FALSE;
         CK_KEY_TYPE keyType = CKK_AES;
+	CK_BYTE *keyLabel = NULL;
         CK_ULONG keyLen = 32;
+
+	// Setting label as key-derived-from-<base_key_label>
+	keyLabel = (CK_BYTE*)malloc(17+strlen(baseKeyLabel));
+	strncpy(keyLabel, "key-derived-from-", 17);
+	strncat(keyLabel, baseKeyLabel, strlen(baseKeyLabel));
 
         CK_ATTRIBUTE attrib[] =
         {
-                {CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
+                {CKA_TOKEN,             &yes,           sizeof(CK_BBOOL)},
                 {CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
                 {CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
                 {CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
@@ -221,12 +229,14 @@ void deriveKey()
                 {CKA_WRAP,              &no,            sizeof(CK_BBOOL)},
                 {CKA_UNWRAP,            &no,            sizeof(CK_BBOOL)},
                 {CKA_VALUE_LEN,         &keyLen,        sizeof(CK_ULONG)},
+		{CKA_LABEL,		keyLabel,	strlen((const char*)keyLabel)},
                 {CKA_KEY_TYPE,          &keyType,       sizeof(CK_KEY_TYPE)}
         };
         CK_ULONG attribLen = sizeof(attrib)/sizeof(*attrib);
         checkOperation(p11Func->C_DeriveKey(hSession, &mech, hMaster, attrib, attribLen, &hDerived), "C_DeriveKey");
         printf("\n> AES key derived.\n");
 	printf("  --> Handle : %lu\n", hDerived);
+	free(keyLabel);
 }
 
 
@@ -235,7 +245,7 @@ void deriveKey()
 void usage(const char *exeName)
 {
 	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_office_password>\n\n", exeName);
+	printf("%s <slot_number> <crypto_office_password> <base_AES-KEY_label>\n\n", exeName);
 }
 
 
@@ -243,18 +253,24 @@ void usage(const char *exeName)
 int main(int argc, char **argv[])
 {
 	printf("\n%s\n", (char*)argv[0]);
-	if(argc<3) {
+	if(argc<4) {
 		usage((char*)argv[0]);
 		exit(1);
 	}
 	slotId = atoi((const char*)argv[1]);
 	slotPin = (CK_BYTE*)malloc(strlen((const char*)argv[2]));
 	strncpy(slotPin, (char*)argv[2], strlen((const char*)argv[2]));
+	baseKeyLabel = (CK_BYTE*)malloc(strlen((const char*)argv[3]));
+	strncpy(baseKeyLabel, (char*)argv[3], strlen((const char*)argv[3]));
 
 	loadLunaLibrary();
 	connectToLunaSlot();
-	generateGenericKey();
-	deriveKey();
+	findBaseKey();
+
+	// Exit if the base-key wasn't found.
+	if(hMaster!=0)
+		deriveKey();
+
 	disconnectFromLunaSlot();
 	freeMem();
 	return 0;
