@@ -221,8 +221,25 @@ Per_Key_Authorization_demo: sfnt_extension/Per_Key_Authorization_demo.c
 
 
 
+# These are samples to demonstrate the new PQC algorithms.
+
+CKM_HSS_KEY_PAIR_GEN_demo: pqc/CKM_HSS_KEY_PAIR_GEN_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/pqc/CKM_HSS_KEY_PAIR_GEN_demo pqc/CKM_HSS_KEY_PAIR_GEN_demo.c
+
+CKM_HSS_sign_demo: pqc/CKM_HSS_sign_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_HSS_sign_demo pqc/CKM_HSS_sign_demo.c
+
+CKM_HSS_verify_demo: pqc/CKM_HSS_verify_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_HSS_verify_demo pqc/CKM_HSS_verify_demo.c
+
+
+
+
 # Compile all sample codes.
-all: encryption signing keygen objmgmt misc sfntExtension
+all: encryption signing keygen objmgmt misc sfntExtension pqc
 
 
 # Compile and build all encryption samples.
@@ -266,6 +283,11 @@ MultiThread_Signing_demo List_Available_Slots
 sfntExtension: Show_Partition_Policies CA_SIMInsert_demo CA_SIMExtract_demo \
 Per_Key_Authorization_demo
 	@echo " - SafeNet Extension samples have build successfully. Executables are inside bin/sfntExtension directory."
+
+
+# Compile and build all PQC samples.
+pqc: CKM_HSS_KEY_PAIR_GEN_demo CKM_HSS_sign_demo CKM_HSS_verify_demo
+	@echo " - PQC samples have build successfully. Executables are inside bin/pqc directory."
 
 
 clean:
@@ -337,7 +359,13 @@ list_samples:
 	@echo "- Show_Partition_Policies"
 	@echo "- CA_SIMExtract_demo"
 	@echo "- CA_SIMInsert_demo"
-	@echo "- Show_Partition_Policies.c
+	@echo "- Per_Key_Authorization_demo"
+	@echo
+	@echo "[ PQC SAMPLES ]"
+	@echo "- CKM_HSS_sign_demo"
+	@echo "- CKM_HSS_verify_demo"
+	@echo "- CKM_HSS_KEY_PAIR_GEN_demo"
+
 
 help:
 	@echo
@@ -354,6 +382,7 @@ help:
 	@echo "- make objmgmt       : Builds all object management samples."
 	@echo "- make misc          : Builds all miscellaneous samples."
 	@echo "- make sfntExtension : Builds all SafeNet Extension samples."
+	@echo "- make pqc	    : Builds all PQC samples."
 	@echo "- make clean         : Deletes all binaries."
 	@echo "- make list_samples  : Displays the list of all available samples."
 	@echo
