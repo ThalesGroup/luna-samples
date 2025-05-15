@@ -3,9 +3,9 @@
 
 <br>
 
-[!NOTE]
-- These samples require a Luna HSM with firmware 7.8.9 or later.
-- They also required the Universal client 10.8.0 or later to compile.
+>[!NOTE]
+>These samples require a Luna HSM with firmware 7.8.9 or later.
+>They also required the Universal client 10.8.0 or later to compile.
 
 <br>
 
