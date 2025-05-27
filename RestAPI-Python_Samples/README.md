@@ -1,11 +1,16 @@
 ## PYTHON REST-API SAMPLES FOR LUNA NETWORK HSM
 <BR>
 
-### WARNING AND DISCLAIMER
-- **These samples are for testing purposes only!**
-- **The Luna REST API is intended for HSM-related management tasks only.**
-- **Some of these samples demonstrate the execution of destructive tasks, such as deletion.**
-- **Please do not use these samples if you are unfamiliar with these management tasks.**
+>[!NOTE]
+> These samples are for testing purposes only!
+> The Luna REST API is intended for HSM-related management tasks only.
+
+<br>
+
+>[!CAUTION]
+> Some of these samples demonstrate the execution of destructive tasks, such as deletion.
+> Repeated failed login attempts beyond the permitted threshold may result in lockout or zeroisation.
+> Please do not use these samples if you are unfamiliar with these management tasks.
 
 <BR><BR>
 | SAMPLE NAME | DESCRIPTION |
@@ -13,6 +18,7 @@
 | client_list | displays a list of all registered clients |
 | client_show | displays information about a client. |
 | client_delete | deletes a registered client. |
+| change_role_password | demonstrates how to change SO, PSO, CO, and CU password. |
 | partition_list | lists all partitions in a Luna Network HSM |
 | partition_create | demonstrates how to create a partition. |
 | partition_delete | demonstrates how to delete a partition. |
