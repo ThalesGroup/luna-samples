@@ -1,5 +1,5 @@
 CC=gcc
-INCLUDES=/usr/safenet/lunaclient/samples/include
+INCLUDES=/usr/safenet/lunaclient/samples/include -I/usr/safenet/lunaclient/sdk/include -I/usr/safenet/lunaclient/sdk/external
 LINKFLAGS=-ldl
 OUTDIR=bin/
 $(shell mkdir -p bin)
@@ -12,11 +12,11 @@ default: all
 
 # Connect_and_Disconnect sample.
 Connect_and_Disconnect: Connect_and_Disconnect.c
-	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o ${OUTDIR}/Connect_and_Disconnect Connect_and_Disconnect.c
+	$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o ${OUTDIR}/Connect_and_Disconnect Connect_and_Disconnect.c
 
 
 
-# These are all samples for demonstrating various encryption mechanisms.
+# Samples to demonstrate various encryption mechanisms.
 CKM_DES3_CBC_PAD_demo: encryption/CKM_DES3_CBC_PAD_demo.c
 	@mkdir -p bin/encryption
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/encryption/CKM_DES3_CBC_PAD_demo encryption/CKM_DES3_CBC_PAD_demo.c
@@ -51,7 +51,7 @@ CKM_RSA_PKCS_demo: encryption/CKM_RSA_PKCS_demo.c
 
 
 
-# These are all samples for generate keys.
+# Samples for generating keys.
 CKM_AES_KEY_GEN_demo: generating_keys/CKM_AES_KEY_GEN_demo.c
 	@mkdir -p bin/keygen
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/keygen/CKM_AES_KEY_GEN_demo generating_keys/CKM_AES_KEY_GEN_demo.c
@@ -94,7 +94,7 @@ CKM_EC_EDWARDS_KEY_PAIR_GEN_demo: generating_keys/CKM_EC_EDWARDS_KEY_PAIR_GEN_de
 
 
 
-# These are all samples to demonstrate various signing mechanisms.
+# Samples to demonstrate various signing mechanisms.
 CKM_AES_CMAC_demo: signing/CKM_AES_CMAC_demo.c
 	@mkdir -p bin/signing
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/signing/CKM_AES_CMAC_demo signing/CKM_AES_CMAC_demo.c
@@ -125,7 +125,7 @@ CKM_SHA256_RSA_PKCS_demo: signing/CKM_SHA256_RSA_PKCS_demo.c
 
 
 
-# These are various samples to demonstrate object management.
+# Samples to demonstrate object management.
 CKM_AES_KWP_demo: object_management/CKM_AES_KWP_demo.c
 	@mkdir -p bin/obj_management/
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/obj_management/CKM_AES_KWP_demo object_management/CKM_AES_KWP_demo.c
@@ -168,7 +168,7 @@ UnwrapTemplates_demo: object_management/UnwrapTemplates_demo.c
 
 
 
-# These are samples to demonstrate miscellaneous pkcs11 tasks.
+# Samples to demonstrate miscellaneous pkcs11 tasks.
 C_GenerateRandom_demo: misc/C_GenerateRandom_demo.c
 	@mkdir -p bin/misc
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/misc/C_GenerateRandom_demo misc/C_GenerateRandom_demo.c
@@ -202,7 +202,7 @@ List_Available_Slots: misc/List_Available_Slots.c
 
 
 
-# These are samples to demonstrate SafeNet Extensions.
+# Samples to demonstrate SafeNet Extensions.
 Show_Partition_Policies: sfnt_extension/Show_Partition_Policies.c
 	@mkdir -p bin/sfntExtension
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/sfntExtension/Show_Partition_Policies sfnt_extension/Show_Partition_Policies.c
@@ -221,8 +221,8 @@ Per_Key_Authorization_demo: sfnt_extension/Per_Key_Authorization_demo.c
 
 
 
-# These are samples to demonstrate the new PQC algorithms.
 
+# Samples to demonstrate how to use PQC algorithms.
 CKM_HSS_KEY_PAIR_GEN_demo: pqc/CKM_HSS_KEY_PAIR_GEN_demo.c
 	@mkdir -p bin/pqc
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/pqc/CKM_HSS_KEY_PAIR_GEN_demo pqc/CKM_HSS_KEY_PAIR_GEN_demo.c
@@ -235,7 +235,29 @@ CKM_HSS_verify_demo: pqc/CKM_HSS_verify_demo.c
 	@mkdir -p bin/pqc
 	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_HSS_verify_demo pqc/CKM_HSS_verify_demo.c
 
+CKM_ML_DSA_KEY_PAIR_GEN_demo: pqc/CKM_ML_DSA_KEY_PAIR_GEN_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_ML_DSA_KEY_PAIR_GEN_demo pqc/CKM_ML_DSA_KEY_PAIR_GEN_demo.c
 
+CKM_ML_KEM_KEY_PAIR_GEN_demo: pqc/CKM_ML_KEM_KEY_PAIR_GEN_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_ML_KEM_KEY_PAIR_GEN_demo pqc/CKM_ML_KEM_KEY_PAIR_GEN_demo.c
+
+CKM_ML_DSA_Sign_Verify_demo: pqc/CKM_ML_DSA_Sign_Verify_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_ML_DSA_Sign_Verify_demo pqc/CKM_ML_DSA_Sign_Verify_demo.c
+
+CKM_HASH_ML_DSA_Sign_Verify_demo: pqc/CKM_HASH_ML_DSA_Sign_Verify_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_HASH_ML_DSA_Sign_Verify_demo pqc/CKM_HASH_ML_DSA_Sign_Verify_demo.c
+
+CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo: pqc/CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo pqc/CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo.c
+
+CKM_ML_KEM_Encapsulate_Decapsulate_demo: pqc/CKM_ML_KEM_Encapsulate_Decapsulate_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_ML_KEM_Encapsulate_Decapsulate_demo pqc/CKM_ML_KEM_Encapsulate_Decapsulate_demo.c
 
 
 # Compile all sample codes.
@@ -286,7 +308,8 @@ Per_Key_Authorization_demo
 
 
 # Compile and build all PQC samples.
-pqc: CKM_HSS_KEY_PAIR_GEN_demo CKM_HSS_sign_demo CKM_HSS_verify_demo
+pqc: CKM_HSS_KEY_PAIR_GEN_demo CKM_HSS_sign_demo CKM_HSS_verify_demo CKM_ML_DSA_KEY_PAIR_GEN_demo CKM_ML_KEM_KEY_PAIR_GEN_demo \
+CKM_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo CKM_ML_KEM_Encapsulate_Decapsulate_demo
 	@echo " - PQC samples have build successfully. Executables are inside bin/pqc directory."
 
 
@@ -365,6 +388,12 @@ list_samples:
 	@echo "- CKM_HSS_sign_demo"
 	@echo "- CKM_HSS_verify_demo"
 	@echo "- CKM_HSS_KEY_PAIR_GEN_demo"
+	@echo "- CKM_ML_DSA_KEY_PAIR_GEN_demo"
+	@echo "- CKM_ML_KEM_KEY_PAIR_GEN_demo"
+	@echo "- CKM_ML_DSA_Sign_Verify_demo"
+	@echo "- CKM_HASH_ML_DSA_Sign_Verify_demo"
+	@echo "- CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo"
+	@echo "- CKM_ML_KEM_Encapsulate_Decapsulate_demo"
 
 
 help:

@@ -280,7 +280,7 @@ void generateHSSKeyPair()
 
 	CK_ATTRIBUTE privateKeyAttributes[] =
 	{
-		{CKA_TOKEN,			&yes,			sizeof(CK_BBOOL)},
+		{CKA_TOKEN,			&no,			sizeof(CK_BBOOL)}, // Change to yes to generate a token object.
 		{CKA_PRIVATE,			&yes,			sizeof(CK_BBOOL)},
 		{CKA_SENSITIVE,			&yes,			sizeof(CK_BBOOL)},
 		{CKA_MODIFIABLE,		&no,			sizeof(CK_BBOOL)},
@@ -298,7 +298,7 @@ void generateHSSKeyPair()
 
 	CK_ATTRIBUTE publicKeyAttributes[] =
 	{
-		{CKA_TOKEN,			&yes,			sizeof(CK_BBOOL)},
+		{CKA_TOKEN,			&no,			sizeof(CK_BBOOL)}, // Change to yes to generate a token object.
 		{CKA_PRIVATE,			&yes,			sizeof(CK_BBOOL)},
 		{CKA_MODIFIABLE,		&no,			sizeof(CK_BBOOL)},
 		{CKA_ENCRYPT,			&no,			sizeof(CK_BBOOL)},
