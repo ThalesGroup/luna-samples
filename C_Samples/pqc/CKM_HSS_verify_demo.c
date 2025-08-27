@@ -271,7 +271,7 @@ void verifyData()
 void usage(const char *exeName)
 {
 	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_office_password> <file_to_verify> <signature_file_name>\n\n", exeName);
+	printf("%s <slot_number> <crypto_officer_password> <file_to_verify> <signature_file_name>\n\n", exeName);
 }
 
 

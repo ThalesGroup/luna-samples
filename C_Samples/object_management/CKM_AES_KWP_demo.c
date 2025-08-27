@@ -276,7 +276,7 @@ void unwrapPrivateKey(CK_ULONG dataLen)
 void usage(const char exeName[30])
 {
 	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_office_password>\n\n", exeName);
+	printf("%s <slot_number> <crypto_officer_password>\n\n", exeName);
 }
 
 

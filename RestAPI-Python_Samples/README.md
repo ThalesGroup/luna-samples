@@ -34,12 +34,12 @@
 
 - Simply executing a sample without arguments will display the correct syntax.
 ```
-	sampaul@jaguarkick:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./client_list
+	sampaul@thales:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./client_list
 	usage :-
 	./client_list <HSM_IP_OR_HOST> <appliance_username>
 
 
-	sampaul@jaguarkick:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_list
+	sampaul@thales:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_list
 	usage :-
 	./partition_list <HSM_IP_OR_HOST\> <appliance_username>
 ```
@@ -51,7 +51,7 @@
 
 ```
 
-	sampaul@jaguarkick:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_create hsm1.<fqdn> spaul
+	sampaul@thales:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_create hsm1.<fqdn> spaul
 	[spaul] Password :
 	Connecting to Luna HSM : [ hsm1.<fqdn> ]
 
@@ -73,7 +73,7 @@
 
 
 
-	sampaul@jaguarkick:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_list 10.0.0.100 spaul
+	sampaul@thales:~/LunaHSM_Sample_Codes/RestAPI-Python_Samples$ ./partition_list 10.0.0.100 spaul
 	[spaul] Password :
 	Connecting to Luna HSM : [ 10.0.0.100 ]
 

@@ -61,18 +61,18 @@ These samples may require these packages to be installed.
 ### How to execute these samples?
 - Set P11_LIB environment variable to point to the cryptoki library. Without P11_LIB set, the sample codes will fail to execute properly.
 ```
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./enumerate_slots.py
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./enumerate_slots.py
 
 enumerate_slots.py
 *** P11_LIB environment variable not set. ***
 > export P11_LIB=/usr/safenet/lunaclient/lib/libCryptoki2_64.so
 
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ export P11_LIB=/usr/safenet/lunaclient/lib/libCryptoki2_64.so
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ export P11_LIB=/usr/safenet/lunaclient/lib/libCryptoki2_64.so
 ```
 
 - Some of these samples can be executed without passing any argument.
 ```
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./enumerate_slots.py
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./enumerate_slots.py
 
 Slot Description: Net Token Slot
 Manufacturer ID: Safenet, Inc.
@@ -98,7 +98,7 @@ Flags: 5
 
 - Sample codes that require command-line arguments will display the correct syntax when executed without any argument.
 ```
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./login_logout.py
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./login_logout.py
 
 login_logout.py
 
@@ -107,7 +107,7 @@ usage :-
 
 
 
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ vtl ver
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ vtl ver
 vtl (64-bit) v10.7.2-16. Copyright (c) 2024 Thales Group. All rights reserved.
 
 The following Luna SA Slots/Partitions were found:
@@ -116,7 +116,7 @@ Slot    Serial #                Label
 ====    ================        =====
    0       1682975235230        SP_SKS_SEHSM3
 
-sampaul@jaguarkick:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./login_logout.py SP_SKS_SEHSM3
+sampaul@thales:~/LunaHSM_Sample_Codes/Python-PKCS11$ ./login_logout.py SP_SKS_SEHSM3
 
 login_logout.py
 

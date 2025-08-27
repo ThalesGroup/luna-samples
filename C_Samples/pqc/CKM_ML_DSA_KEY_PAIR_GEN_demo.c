@@ -241,7 +241,7 @@ void generateMLDSAKeyPair()
 void usage(const char *exeName)
 {
 	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_office_password>\n\n", exeName);
+	printf("%s <slot_number> <crypto_officer_password>\n\n", exeName);
 }
 
 

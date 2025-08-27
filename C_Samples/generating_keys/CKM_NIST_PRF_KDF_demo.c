@@ -245,7 +245,7 @@ void deriveKey()
 void usage(const char *exeName)
 {
 	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_office_password> <base_AES-KEY_label>\n\n", exeName);
+	printf("%s <slot_number> <crypto_officer_password> <base_AES-KEY_label>\n\n", exeName);
 }
 
 
