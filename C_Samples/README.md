@@ -81,7 +81,7 @@ Executing the compiled binary will display the syntax to use. See example below 
 `sampaul@jaguarkick:~$ export P11_LIB=/usr/lib/libCryptoki2_64.so`<br><br>
 `sampaul@jaguarkick:~$ ./Connect_and_Disconnect`<br>
 `Usage :-`<br>
-`./Connect_and_Disconnect <slot_number> <crypto_office_password>`<br><br>
+`./Connect_and_Disconnect <slot_number> <crypto_officer_password>`<br><br>
 `sampaul@jaguarkick:~$ ./Connect_and_Disconnect 0 userpin`<br>
 `./Connect_and_Disconnect`<br>
 `> P11 library loaded.`<br>
