@@ -11,6 +11,7 @@
 | object_management | samples to demonstrate how to manage keys | 10 |
 | sfnt_extension | samples demonstrating various SafeNet function (Vendor Defined Functions). | 4 |
 | misc | samples demonstrating various miscellaneous tasks. | 8 |
+| pqc | samples demonstrating various PQC mechanisms. | 12 |
 | Connect_and_Disconnect.c | a sample that shows how to connect to a Luna HSM and disconnect from it. | - |
 
 <br>
@@ -31,7 +32,8 @@
   - `make keygen` : Builds all samples demonstrating key generation.<br>
   - `make objmgmt` : Builds all samples to demonstrate object management.<br>
   - `make sfntExtension` : Builds all samples to demonstrate the usage of SFNTExtension.<br>
-  - `make misc` : Build all other miscellaneous samples.<br>
+  - `make misc` : Builds all other miscellaneous samples.<br>
+  - `make pqc` : Builds all pqc samples.<br>
   - `make help` : Displays all make options.<br>
 
 - If you want to compile a specific C file, you can pass the filename (without the .c extension or the path) to make command. For example:<br>
