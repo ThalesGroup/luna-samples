@@ -259,6 +259,19 @@ CKM_ML_KEM_Encapsulate_Decapsulate_demo: pqc/CKM_ML_KEM_Encapsulate_Decapsulate_
 	@mkdir -p bin/pqc
 	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_ML_KEM_Encapsulate_Decapsulate_demo pqc/CKM_ML_KEM_Encapsulate_Decapsulate_demo.c
 
+CKM_EXTMU_ML_DSA_Sign_Verify_demo: pqc/CKM_EXTMU_ML_DSA_Sign_Verify_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/CKM_EXTMU_ML_DSA_Sign_Verify_demo pqc/CKM_EXTMU_ML_DSA_Sign_Verify_demo.c
+
+Wrap_PQC_PrivateKey_demo: pqc/Wrap_PQC_PrivateKey_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/Wrap_PQC_PrivateKey_demo pqc/Wrap_PQC_PrivateKey_demo.c
+
+Unwrap_PQC_PrivateKey_demo: pqc/Unwrap_PQC_PrivateKey_demo.c
+	@mkdir -p bin/pqc
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/pqc/Unwrap_PQC_PrivateKey_demo pqc/Unwrap_PQC_PrivateKey_demo.c
+
+
 
 # Compile all sample codes.
 all: encryption signing keygen objmgmt misc sfntExtension pqc
@@ -309,7 +322,8 @@ Per_Key_Authorization_demo
 
 # Compile and build all PQC samples.
 pqc: CKM_HSS_KEY_PAIR_GEN_demo CKM_HSS_sign_demo CKM_HSS_verify_demo CKM_ML_DSA_KEY_PAIR_GEN_demo CKM_ML_KEM_KEY_PAIR_GEN_demo \
-CKM_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo CKM_ML_KEM_Encapsulate_Decapsulate_demo
+CKM_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo CKM_ML_KEM_Encapsulate_Decapsulate_demo \
+Wrap_PQC_PrivateKey_demo Unwrap_PQC_PrivateKey_demo CKM_EXTMU_ML_DSA_Sign_Verify_demo
 	@echo " - PQC samples have build successfully. Executables are inside bin/pqc directory."
 
 
@@ -393,7 +407,10 @@ list_samples:
 	@echo "- CKM_ML_DSA_Sign_Verify_demo"
 	@echo "- CKM_HASH_ML_DSA_Sign_Verify_demo"
 	@echo "- CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo"
+	@echo "- CKM_EXTMU_ML_DSA_Sign_Verify_demo"
 	@echo "- CKM_ML_KEM_Encapsulate_Decapsulate_demo"
+	@echo "- Wrap_PQC_PrivateKey_demo"
+	@echo
 
 
 help:

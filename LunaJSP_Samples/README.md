@@ -7,15 +7,18 @@
 | object_management | samples demonstrating how to manage different types of pkcs11 objects. | 16 |
 | slot_management | samples demonstrating various slot management related operations. | 4 |
 | crypto_operations | samples demonstrating various cryptographic operations using LunaProvider. | 19 |
+| pqc | samples demonstrating the usage of various pqc algorithms. | 7 |
 ---------
+<br>
 
 ### Guidelines for Compiling and Executing LunaJSP Sample Codes
 - **Java Security Provider**: The correct method to compile and execute these codes depends on how LunaJSP is configured on your machine. These samples will first attempt to load LunaProvider from java.security. If LunaProvider is not found in java.security, the sample code will dynamically add it at runtime. Therefore, there is no need to configure LunaProvider statically in java.security to run these samples.
 - **Luna JSP Libraries**: These samples require LunaJSP libraries to compile and execute. The two required files are LunaProvider.jar and libLunaAPI.so (Unix/Linux) or LunaAPI.dll (Windows).
 - **ClassPath/Java Library Path**: If the JRE does not know where to find the two LunaJSP libraries, you need to use classpath and java.library.path to execute the code.
-- **JDK/JRE**: I used OpenJDK 17.0.2 for testing all samples, although I am confident these samples will work with other supported JDKs (up to JDK 21).
+- **JDK/JRE**: I used OpenJDK 17.0.2 / 21.0.8 for testing all samples, although I am confident these samples will work with other supported JDKs (up to JDK 21).
 - **Runtime Arguments**: These sample codes do not use hardcoded information such as usernames, passwords, or slot labels. You are required to provide this information as arguments when executing the samples.
-----
+-------
+<br>
 
 ### <u>Compiling the code</u>
 - **If JDK knows where to find Luna JSP files:**

@@ -11,9 +11,10 @@
 
 
 	OBJECTIVE :
-	- This sample demonstrates how to generate an ML-DSA key pair using one of three ML-DSA parameters.
-	- It requires firmware version 7.9.0 to execute and does not utilise the PQC-FM toolkit.
-	- Luna Client 10.9.0 must also be installed.
+	- This sample demonstrates how to unwrap wrapped private key of type ML-DSA and ML-KEM into a Luna partition.
+	- It requires firmware version 7.9.1 and Lunaclient 10.9.0 or later to execute.
+	- The wrap private key is read from a file and unwrapped using the CKM_AES_KWP mechanism.
+	- The filename of the file containing the wrappped private key is used as the label for the unwrapped private key.
 */
 
 #include <stdio.h>
@@ -42,12 +43,16 @@ CK_FUNCTION_LIST *p11Func = NULL;
 CK_SESSION_HANDLE hSession = 0;
 CK_SLOT_ID slotId = 0; // slot id
 CK_BYTE *slotPin = NULL; // slot password
-CK_OBJECT_HANDLE objHandlePub = 0;
-CK_OBJECT_HANDLE objHandlePri = 0;
-CK_ULONG labelLen = 0;
-CK_ML_DSA_PARAMETER_SET_TYPE paramType = 0;
-char *privKeyLabel = NULL;
-char *pubKeyLabel = NULL;
+CK_OBJECT_HANDLE hWrappingKey = 0; // stores the wrapping key handle.
+CK_OBJECT_HANDLE hUnwrappedKey = 0; // stores the unwrapped key handle.
+char *privKeyLabel = NULL; // stores the private key label.
+char *wrappingKeyLabel = NULL; // stores the wrapping key label.
+char *wrappedKeyFile = NULL; // stores the filename containing the wrapped key.
+CK_BYTE iv[] = {0x1, 0x2, 0x3, 0x4};
+CK_BYTE *wrappedKey = NULL;  // stores the wrapped key data.
+CK_KEY_TYPE unwrappedKeyType = 0; // stores the type of key to unwrap.
+CK_ULONG wrappedKeyLen = 0;
+CK_ULONG privKeyLabelLen = 0;
 
 
 // Loads Luna cryptoki library
@@ -109,9 +114,11 @@ void freeMem()
         #else
                 FreeLibrary(libHandle); // Close library handle on Windows.
         #endif
-        free(slotPin);
+	free(slotPin);
 	free(privKeyLabel);
-	free(pubKeyLabel);
+	free(wrappingKeyLabel);
+	free(wrappedKeyFile);
+	free(wrappedKey);
 }
 
 
@@ -154,85 +161,126 @@ void disconnectFromLunaSlot()
 
 
 
-// Asks for ML-DSA keypair labels and formats the labels as <LABEL>-prvkey and <LABEL>-pubKey.
-void inputKeyLabel()
+// Reads the wrapped key file.
+void readWrappedKeyFile()
 {
-	char keyLabel[64];
+	FILE *readFile;
+	long fileSize;
 
-	printf("\n> Enter ML-DSA Keypair Label : ");
-	scanf("%63s", keyLabel);
-	labelLen = strlen(keyLabel) + 8;
+	readFile = fopen(wrappedKeyFile, "rb");
+	if(!readFile)
+	{
+		printf("Failed to read %s.\n", wrappedKeyFile);
+		exit(1);
+	}
 
-	privKeyLabel = (char*)malloc(labelLen);
-	snprintf(privKeyLabel, labelLen, "%s-prvkey", keyLabel);
+	fseek(readFile, 0, SEEK_END);
+	fileSize = ftell(readFile);
+	wrappedKeyLen = fileSize;
+	rewind(readFile);
 
-	pubKeyLabel = (char*)malloc(labelLen);
-	snprintf(pubKeyLabel, labelLen, "%s-pubkey", keyLabel);
+	wrappedKey = (CK_BYTE*)malloc(fileSize);
+	fread(wrappedKey, sizeof(CK_BYTE), fileSize, readFile);
+	fclose(readFile);
+	printf("\n> Wrapped key read from file.\n");
 }
 
 
 
-// Asks for the ML-DSA parameter to use.
-void inputParameter()
+// Asks user to input the label of the wrapping key.
+void inputLabels()
 {
-	int param;
-	printf("  --> ML-DSA parameter\n");
-	printf("      - 1. MLDSA-44\n");
-	printf("      - 2. MLDSA-65\n");
-	printf("      - 3. MLDSA-87\n");
-	printf("      : ");
-	scanf("%d", &param);
-	switch(param)
+	int keyType = 0;
+	char label[50];
+	int len;
+
+        printf("\n> Enter wrapping key label : ");
+        fgets(label, sizeof(label), stdin);
+        len = strlen(label);
+        wrappingKeyLabel = (CK_UTF8CHAR*)malloc(len);
+        strncpy(wrappingKeyLabel, label, len);
+        wrappingKeyLabel[len] = '\0';
+
+
+	printf("\n> Type of key to unwrap : \n");
+	printf("  --> 1. ML-DSA.\n");
+	printf("  --> 2. ML-KEM.\n");
+	printf("      Key type : ");
+	scanf("%d", &keyType);
+	if(keyType==1)
+		unwrappedKeyType = CKK_ML_DSA;
+	else if(keyType==2)
+		unwrappedKeyType = CKK_ML_KEM;
+	else
 	{
-		case 1: paramType = CKP_ML_DSA_44; break;
-		case 2: paramType = CKP_ML_DSA_65; break;
-		case 3: paramType = CKP_ML_DSA_87; break;
-		default: printf("Invalid parameter\n"); exit(0);
+		printf("\nInvalid option.\n");
+		disconnectFromLunaSlot();
+		freeMem();
+		exit(1);
 	}
 }
 
 
 
-// This function generates ML-DSA key pair.
-void generateMLDSAKeyPair()
+
+// This function finds the wrapping AES key.
+void findWrappingKey()
 {
-        CK_MECHANISM mech = {CKM_ML_DSA_KEY_PAIR_GEN};
-        CK_BBOOL yes = CK_TRUE;
-        CK_BBOOL no = CK_FALSE;
-	CK_OBJECT_CLASS objClassPub = CKO_PUBLIC_KEY;
-        CK_OBJECT_CLASS objClassPri = CKO_PRIVATE_KEY;
+	CK_BBOOL yes = CK_TRUE;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
+	CK_OBJECT_HANDLE handles[1];
+	CK_ULONG objectCount = 0;
 
-	inputKeyLabel();
-	inputParameter();
+	CK_ATTRIBUTE attrib[] =
+	{
+		{CKA_CLASS,                     &objClass,              sizeof(CK_OBJECT_CLASS)},
+		{CKA_KEY_TYPE,                  &keyType,               sizeof(CK_KEY_TYPE)},
+		{CKA_LABEL,                     wrappingKeyLabel,       strlen(wrappingKeyLabel)-1}
+	};
+	CK_ULONG attribLen = sizeof(attrib) / sizeof(*attrib);
+	checkOperation(p11Func->C_FindObjectsInit(hSession, attrib, attribLen), "C_FindObjectsInit");
+	checkOperation(p11Func->C_FindObjects(hSession, handles, 1, &objectCount), "C_FindObjects");
+	if(objectCount==0)
+	{
+		printf("\n> Wrapping key not found.\n");
+		disconnectFromLunaSlot();
+		freeMem();
+		exit(1);
+	}
+	else
+	{
+		hWrappingKey = handles[0];
+		printf("\n> Wrapping key found. Handle : %lu\n", hWrappingKey);
+	}
+}
 
-        CK_ATTRIBUTE attribPub[] =
-        {
-                {CKA_TOKEN,             &yes,           sizeof(CK_BBOOL)}, 		// Change this to no to generate a session object.
-                {CKA_CLASS,             &objClassPub,   sizeof(CK_OBJECT_CLASS)},
-                {CKA_PRIVATE,           &no,	        sizeof(CK_BBOOL)},
-                {CKA_VERIFY,            &yes,           sizeof(CK_BBOOL)},
-		{CKA_PARAMETER_SET,	&paramType,	sizeof(CK_ML_DSA_PARAMETER_SET_TYPE)},
-                {CKA_LABEL,             pubKeyLabel,    labelLen-1}
-        };
-        CK_ULONG attribPubLen = sizeof(attribPub) / sizeof(*attribPub);
 
-        CK_ATTRIBUTE attribPri[] =
-        {
-                {CKA_TOKEN,             &yes,        	sizeof(CK_BBOOL)},		// Change this to no to generate a session object.
-                {CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
-                {CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
-                {CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
-                {CKA_EXTRACTABLE,       &yes,           sizeof(CK_BBOOL)},
-                {CKA_SIGN,              &yes,           sizeof(CK_BBOOL)},
-                {CKA_CLASS,             &objClassPri,   sizeof(CK_OBJECT_CLASS)},
-		{CKA_LABEL,             privKeyLabel,   labelLen-1}
-        };
-        CK_ULONG attribPriLen = sizeof(attribPri) / sizeof(*attribPri);
 
-        checkOperation(p11Func->C_GenerateKeyPair(hSession, &mech, attribPub, attribPubLen, attribPri, attribPriLen, &objHandlePub, &objHandlePri), "C_GenerateKeyPair");
-	printf("\n> ML-DSA keypair generated.\n");
-	printf("  --> Private key handle : %lu\n", objHandlePri);
-	printf("  --> Public key handle : %lu\n", objHandlePub);
+// This function unwraps the wrapped private key
+void unwrapPrivateKey()
+{
+	CK_BBOOL yes = CK_TRUE;
+	CK_MECHANISM mech = {CKM_AES_KWP, iv, sizeof(iv)};
+	CK_OBJECT_CLASS objClass = CKO_PRIVATE_KEY;
+
+	CK_ATTRIBUTE attrib[] =
+	{
+		{CKA_TOKEN,             &yes,           	sizeof(CK_BBOOL)},
+		{CKA_PRIVATE,           &yes,           	sizeof(CK_BBOOL)},
+		{CKA_SENSITIVE,         &yes,           	sizeof(CK_BBOOL)},
+		{CKA_EXTRACTABLE,       &yes,           	sizeof(CK_BBOOL)},
+		{CKA_MODIFIABLE,        &yes,           	sizeof(CK_BBOOL)},
+		{CKA_SIGN,              &yes,           	sizeof(CK_BBOOL)},
+		{CKA_DECRYPT,           &yes,           	sizeof(CK_BBOOL)},
+		{CKA_CLASS,             &objClass,      	sizeof(CK_OBJECT_CLASS)},
+		{CKA_KEY_TYPE,          &unwrappedKeyType,      sizeof(CK_KEY_TYPE)},
+		{CKA_LABEL,		privKeyLabel,		privKeyLabelLen}
+	};
+	CK_ULONG attribLen = sizeof(attrib)/sizeof(*attrib);
+
+	checkOperation(p11Func->C_UnwrapKey(hSession, &mech, hWrappingKey, wrappedKey, wrappedKeyLen, attrib, attribLen, &hUnwrappedKey), "C_UnwrapKey");
+	printf("\n> Private key unwrapped as handle : %lu.\n", hUnwrappedKey);
 }
 
 
@@ -240,27 +288,46 @@ void generateMLDSAKeyPair()
 // Prints the syntax for executing this code.
 void usage(const char *exeName)
 {
-	printf("\nUsage :-\n");
-	printf("%s <slot_number> <crypto_officer_password>\n\n", exeName);
+        printf("\nUsage :-\n");
+        printf("%s <slot_number> <crypto_officer_password> <wrapped_private_key_file>\n\n", exeName);
 }
+
 
 
 
 int main(int argc, char **argv[])
 {
+	int len = 0;
 	printf("\n%s\n", (char*)argv[0]);
-	if(argc<3) {
+	if(argc<4) {
 		usage((char*)argv[0]);
 		exit(1);
 	}
 	slotId = atoi((const char*)argv[1]);
-	slotPin = (CK_BYTE*)malloc(strlen((const char*)argv[2]));
-	strncpy(slotPin, (char*)argv[2], strlen((const char*)argv[2]));
+
+	len = strlen((const char*)argv[2]);
+	slotPin = (CK_BYTE*)malloc(len);
+	strncpy(slotPin, (char*)argv[2], len);
+
+	len = strlen((const char*)argv[3]);
+	wrappedKeyFile = (char*)malloc(len);
+	strncpy(wrappedKeyFile, (char*)argv[3], len);
+
+	privKeyLabelLen = len + 6;
+	privKeyLabel = (char*)malloc(len + 6);
+	strncpy(privKeyLabel, wrappedKeyFile, len - 4);
+	len = 10;
+	strncat(privKeyLabel, "-unwrapped", len);
 
 	loadLunaLibrary();
 	connectToLunaSlot();
-	generateMLDSAKeyPair();
+	readWrappedKeyFile();
+	inputLabels();
+	findWrappingKey();
+	unwrapPrivateKey();
+
 	disconnectFromLunaSlot();
 	freeMem();
 	return 0;
 }
+

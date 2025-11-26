@@ -206,7 +206,7 @@ void generateMLKEMKeyPair()
 
         CK_ATTRIBUTE attribPub[] =
         {
-                {CKA_TOKEN,             &no,            sizeof(CK_BBOOL)}, // Change to yes to generate a token object.
+                {CKA_TOKEN,             &yes,           sizeof(CK_BBOOL)}, // Change this to no to generate a session object.
                 {CKA_CLASS,             &objClassPub,   sizeof(CK_OBJECT_CLASS)},
                 {CKA_PRIVATE,           &no,	        sizeof(CK_BBOOL)},
                 {CKA_VERIFY,            &yes,           sizeof(CK_BBOOL)},
@@ -218,11 +218,11 @@ void generateMLKEMKeyPair()
 
         CK_ATTRIBUTE attribPri[] =
         {
-                {CKA_TOKEN,             &no,        	sizeof(CK_BBOOL)}, // Change to yes to generate a token object.
+                {CKA_TOKEN,             &yes,        	sizeof(CK_BBOOL)}, // Change this to no to generate a session object.
                 {CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
                 {CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
                 {CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
-                {CKA_EXTRACTABLE,       &no,            sizeof(CK_BBOOL)},
+                {CKA_EXTRACTABLE,       &yes,            sizeof(CK_BBOOL)},
                 {CKA_SIGN,              &yes,           sizeof(CK_BBOOL)},
                 {CKA_CLASS,             &objClassPri,   sizeof(CK_OBJECT_CLASS)},
 		{CKA_DECRYPT,		&yes,		sizeof(CK_BBOOL)},
