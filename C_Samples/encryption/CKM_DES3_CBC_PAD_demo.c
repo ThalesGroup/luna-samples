@@ -101,11 +101,11 @@ void loadLunaLibrary()
 // Always a good idea to free up some memory before exiting.
 void freeMem()
 {
-        #ifdef OS_UNIX
-                dlclose(libHandle); // Close library handle on Unix/Linux
-        #else
-                FreeLibrary(libHandle); // Close library handle on Windows.
-        #endif
+	#ifdef OS_UNIX
+		dlclose(libHandle); // Close library handle on Unix/Linux
+	#else
+		FreeLibrary(libHandle); // Close library handle on Windows.
+	#endif
 	free(slotPin);
 	free(encryptedData);
 	free(decryptedData);
@@ -237,10 +237,10 @@ int main(int argc, char **argv[])
 	connectToLunaSlot();
 
 	generateDES3Key();
-        CK_ULONG encLen = encryptData();
-        decryptData(encLen);
-        printf("\n> Encrypted Data (HEX)\t\t: "); bytesToHex(encryptedData, encLen);
-        printf("\n> Decrypted Data (HEX)\t\t: "); bytesToHex(decryptedData, strlen(rawData)-1);
+	CK_ULONG encLen = encryptData();
+	decryptData(encLen);
+	printf("\n> Encrypted Data (HEX)\t\t: "); bytesToHex(encryptedData, encLen);
+	printf("\n> Decrypted Data (HEX)\t\t: "); bytesToHex(decryptedData, strlen(rawData)-1);
 	printf("\n> Plain Text\t\t\t: %s\n", rawData);
 	disconnectFromLunaSlot();
 	freeMem();

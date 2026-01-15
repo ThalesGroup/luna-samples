@@ -10,19 +10,20 @@ Documentation: https://www.thalesdocs.com/gphsm/luna/7/docs/network/Content/FM_S
 - These samples require an FM-capable and FM-enabled Luna HSM. FM is supported by Luna Network HSM 7 and Luna PCIe 7 with firmware 7.4.0 or newer.
 - These samples were written using Universal Client 10.3.0 and Luna Network HSM running firmware 7.7.1.
 --------------------------------------
-<br>
+<br><br>
 
 | **DIRECTORY** | **DESCRIPTION** | 
 | --- | --- |
 | Caesar | A basic sample to demonstrate how FM and host application works. |
+
 ---------------------------------------
 <br>
-
 ### <u>Compiling the code (FM and HOST)</u>
 - To build everyting: Use `make all`
 - Or if you want to build either one of them, there's a makefile present inside both the FM and host directories.
-<BR>
+---------------------------------------
 
+<BR>
 ### <u>Generating keys for signing FM.</u>
 - Before creating an FM file, you must generate a key pair. The private key will then be used for signing the bin file, producing the FM file.
 - The procedure for generating signing keys and certificate are as follows:
@@ -70,7 +71,7 @@ Documentation: https://www.thalesdocs.com/gphsm/luna/7/docs/network/Content/FM_S
 	<pre>
 		sampaul@thales:~$ cmu export -out thales.cer -password $COPASS
 	</pre>
-<BR>
+
 ------------------
 
 ### <u>Making Functionality Module.</u>
@@ -86,14 +87,13 @@ Documentation: https://www.thalesdocs.com/gphsm/luna/7/docs/network/Content/FM_S
 <pre>
 	sampaul@thales:~/LunaHSM_Sample_Codes/Luna-FM_Samples/caesar$ vtl ver
 	vtl (64-bit) v10.3.0-275. Copyright (c) 2020 SafeNet. All rights reserved.
-	
-	The following Luna SA Slots/Partitions were found:
 
+	The following Luna SA Slots/Partitions were found:
 	Slot    Serial #                Label
 	====    ================        =====
 	   0       1582163089435        SEHSM2-SP
-
-
+</pre>
+<pre>
 	sampaul@thales:~/LunaHSM_Sample_Codes/Luna-FM_Samples/caesar$ mkfm -f bin-ppc/caesar.bin -o caesar.fm -k SEHSM2-SP/LunaFM_privKey -p $COPASS
 	Luna Functionality Module Signer Utility (64-bit) v10.3.0-275. Copyright (c) 2020 SafeNet. All rights reserved.
 	mkfm: Processing ELF file bin-ppc/caesar.bin
@@ -102,6 +102,7 @@ Documentation: https://www.thalesdocs.com/gphsm/luna/7/docs/network/Content/FM_S
 	sampaul@thales:~/LunaHSM_Sample_Codes/Luna-FM_Samples/caesar$ ls -l caesar.fm
 	-rw-rw-r-- 1 sampaul sampaul 7593 Feb 21 16:06 caesar.fm
 </pre>
+
 <br>
 
 - Upload the certificate and FM file to Luna HSM as the "admin" user; **FMs uploaded by other accounts cannot be loaded.**

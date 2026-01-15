@@ -8,7 +8,7 @@
 
 #define CAESAR_FM_ID FMID_ALLOCATE_NORM
 #define CAESAR_FM_PRODUCT_ID "Caesar"
-#define CAESAR_FM_MANUFACTURER_ID "Snakeoil Security Inc."
+#define CAESAR_FM_MANUFACTURER_ID "Thales"
 #define BUFFER_SIZE 128
 
 #endif

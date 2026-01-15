@@ -213,8 +213,8 @@ void decryptData(CK_ULONG encLen)
         checkOperation(p11Func->C_DecryptInit(hSession, &mech, objHandle), "C_DecryptInit");
         checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, NULL_PTR, &decLen), "C_Decrypt");
         decryptedData = (CK_BYTE*)calloc(decLen,1);
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, decryptedData, &decLen), "C_Decrypt");
-        printf("\n> Encrypted data decrypted.\n");
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, decryptedData, &decLen), "C_Decrypt");
+	printf("\n> Encrypted data decrypted.\n");
 	printf("  --> Decrypted data (Hex) \t\t: "); bytesToHex(decryptedData, decLen);
 }
 
@@ -231,8 +231,8 @@ void encryptData()
         encryptedData = (CK_BYTE*)calloc(encLen,1);
         checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), encryptedData, &encLen), "C_Encrypt");
 	printf("\n> Plaintext encrypted.\n");
-        printf("  --> Encrypted data (Hex)\t\t: "); bytesToHex(encryptedData, encLen);
-        decryptData(encLen);
+	printf("  --> Encrypted data (Hex)\t\t: "); bytesToHex(encryptedData, encLen);
+	decryptData(encLen);
 }
 
 

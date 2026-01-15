@@ -10,16 +10,11 @@
         **********************************************************************************
 
 
-
-
-
         OBJECTIVE : 
 	- This sample demonstrates how to generate EDDSA using CKM_EC_EDWARDS_KEY_PAIR_GEN mechanism.
 	- Note that CKM_EC_EDWARDS_KEY_PAIR_GEN is not FIPS approved.
 	- Executing this sample on a Luna HSM configured to operate in FIPS mode would return CKR_MECHANISM_INVALID.
 */
-
-
 
 
 

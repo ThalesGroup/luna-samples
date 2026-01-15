@@ -10,8 +10,6 @@
         **********************************************************************************
 
 
-
-
 	OBJECTIVE :-
 	- This sample demonstrates how to generate DES-3 key (NOT FIPS APPROVED).
 	- Executing this sample on a FIPS mode enabled Luna HSM would result in CKR_MECHANISM_INVALID.
@@ -177,7 +175,7 @@ void generateDES3Key()
         CK_ULONG attribLen = sizeof(attrib) / sizeof(*attrib);
 
         checkOperation(p11Func->C_GenerateKey(hSession, &mech, attrib, attribLen, &objHandle),"C_GenerateKey");
-	printf("\n> DES-3 Key generated. Handle : %lu\n", objHandle);
+        printf("\n> DES-3 Key generated. Handle : %lu\n", objHandle);
 }
 
 

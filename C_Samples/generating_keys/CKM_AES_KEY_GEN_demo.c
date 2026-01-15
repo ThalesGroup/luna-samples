@@ -147,30 +147,30 @@ void disconnectFromLunaSlot()
 // This function generates a 256 bit AES key.
 void generateAESKey()
 {
-        CK_MECHANISM mech = {CKM_AES_KEY_GEN};
-        CK_BYTE keyLabel[] = "MyAESKey";
-        CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
-        CK_BBOOL yes = CK_TRUE;
-        CK_BBOOL no = CK_FALSE;
-        CK_ULONG keyLen = 32;
+	CK_MECHANISM mech = {CKM_AES_KEY_GEN};
+	CK_BYTE keyLabel[] = "MyAESKey";
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_BBOOL yes = CK_TRUE;
+	CK_BBOOL no = CK_FALSE;
+	CK_ULONG keyLen = 32;
 
-        CK_ATTRIBUTE attrib[] =
-        {
-                {CKA_TOKEN,             &no,                   sizeof(CK_BBOOL)},
-                {CKA_PRIVATE,           &yes,                   sizeof(CK_BBOOL)},
-                {CKA_ENCRYPT,           &yes,                   sizeof(CK_BBOOL)},
-                {CKA_DECRYPT,           &yes,                   sizeof(CK_BBOOL)},
-                {CKA_WRAP,              &no,                    sizeof(CK_BBOOL)},
-                {CKA_UNWRAP,            &no,                    sizeof(CK_BBOOL)},
-                {CKA_CLASS,             &objClass,              sizeof(CK_OBJECT_CLASS)},
-                {CKA_SENSITIVE,         &yes,                   sizeof(CK_BBOOL)},
-                {CKA_EXTRACTABLE,       &yes,                   sizeof(CK_BBOOL)},
-                {CKA_MODIFIABLE,        &yes,                   sizeof(CK_BBOOL)},
-                {CKA_LABEL,             &keyLabel,              sizeof(keyLabel)-1},
-                {CKA_VALUE_LEN,         &keyLen,                sizeof(CK_ULONG)}
-        };
-        CK_ULONG attribLen = sizeof(attrib) / sizeof(*attrib);
-        checkOperation(p11Func->C_GenerateKey(hSession, &mech, attrib, attribLen, &objHandle),"C_GenerateKey");
+	CK_ATTRIBUTE attrib[] =
+	{
+		{CKA_TOKEN,             &no,                   sizeof(CK_BBOOL)},
+		{CKA_PRIVATE,           &yes,                   sizeof(CK_BBOOL)},
+		{CKA_ENCRYPT,           &yes,                   sizeof(CK_BBOOL)},
+		{CKA_DECRYPT,           &yes,                   sizeof(CK_BBOOL)},
+		{CKA_WRAP,              &no,                    sizeof(CK_BBOOL)},
+		{CKA_UNWRAP,            &no,                    sizeof(CK_BBOOL)},
+		{CKA_CLASS,             &objClass,              sizeof(CK_OBJECT_CLASS)},
+		{CKA_SENSITIVE,         &yes,                   sizeof(CK_BBOOL)},
+		{CKA_EXTRACTABLE,       &yes,                   sizeof(CK_BBOOL)},
+		{CKA_MODIFIABLE,        &yes,                   sizeof(CK_BBOOL)},
+		{CKA_LABEL,             &keyLabel,              sizeof(keyLabel)-1},
+		{CKA_VALUE_LEN,         &keyLen,                sizeof(CK_ULONG)}
+	};
+	CK_ULONG attribLen = sizeof(attrib) / sizeof(*attrib);
+	checkOperation(p11Func->C_GenerateKey(hSession, &mech, attrib, attribLen, &objHandle),"C_GenerateKey");
 	printf("\n> AES Key generated. Handle : %lu\n", objHandle);
 }
 

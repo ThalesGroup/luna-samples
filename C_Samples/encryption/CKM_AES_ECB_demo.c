@@ -11,12 +11,8 @@
 
 
 
-
-
         OBJECTIVE : This sample demonstrates how to encrypt and decrypt using CKM_AES_ECB mechanism.
 */
-
-
 
 
 
@@ -107,11 +103,11 @@ void loadLunaLibrary()
 // Always a good idea to free up some memory before exiting.
 void freeMem()
 {
-        #ifdef OS_UNIX
-                dlclose(libHandle); // Close library handle on Unix/Linux
-        #else
-                FreeLibrary(libHandle); // Close library handle on Windows.
-        #endif
+	#ifdef OS_UNIX
+		dlclose(libHandle); // Close library handle on Unix/Linux
+	#else
+		FreeLibrary(libHandle); // Close library handle on Windows.
+	#endif
 	free(slotPin);
 }
 
@@ -185,12 +181,12 @@ void generateAESKey()
 // This function decrypts data
 void decryptData(CK_ULONG encLen)
 {
-        CK_MECHANISM mech = {CKM_AES_ECB};
-        CK_ULONG decLen = 0;
-        checkOperation(p11Func->C_DecryptInit(hSession, &mech, hObject), "C_DecryptInit");
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, NULL_PTR, &decLen),"C_Decrypt");
+	CK_MECHANISM mech = {CKM_AES_ECB};
+	CK_ULONG decLen = 0;
+	checkOperation(p11Func->C_DecryptInit(hSession, &mech, hObject), "C_DecryptInit");
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, NULL_PTR, &decLen),"C_Decrypt");
 	decryptedData = (CK_BYTE*)calloc(decLen, 1);
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, decryptedData, &decLen), "C_Decrypt");
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, encLen, decryptedData, &decLen), "C_Decrypt");
 	printf("\n> Encrypted data decrypted.\n");
 }
 
@@ -199,12 +195,12 @@ void decryptData(CK_ULONG encLen)
 // This function encrypts data
 CK_ULONG encryptData()
 {
-        CK_MECHANISM mech = {CKM_AES_ECB};
-        CK_ULONG encLen = 0;
-        checkOperation(p11Func->C_EncryptInit(hSession, &mech, hObject),"C_EncryptInit");
-        checkOperation(p11Func->C_Encrypt(hSession, plainText, strlen(plainText), NULL_PTR, &encLen),"C_Encrypt");
-        encryptedData = (CK_BYTE*)calloc(encLen, 1);
-        checkOperation(p11Func->C_Encrypt(hSession, plainText, strlen(plainText), encryptedData, &encLen),"C_Encrypt");
+	CK_MECHANISM mech = {CKM_AES_ECB};
+	CK_ULONG encLen = 0;
+	checkOperation(p11Func->C_EncryptInit(hSession, &mech, hObject),"C_EncryptInit");
+	checkOperation(p11Func->C_Encrypt(hSession, plainText, strlen(plainText), NULL_PTR, &encLen),"C_Encrypt");
+	encryptedData = (CK_BYTE*)calloc(encLen, 1);
+	checkOperation(p11Func->C_Encrypt(hSession, plainText, strlen(plainText), encryptedData, &encLen),"C_Encrypt");
 	printf("\n> Plaintext encrypted.\n");
         return encLen;
 }

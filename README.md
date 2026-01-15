@@ -23,10 +23,8 @@ Features -
 + **Topics Covered**: The samples in this repository would cover the following topics:
 	- PKCS#11.
 	- Luna JSP.
-	- Luna RestAPI.
-	- Luna Functionality Module.
-	- Python-pkcs11.
-+ **Languages Covered**: Samples available for C, Java and Python3.
+	- Luna RestAPI
++ **Languages Covered**: Samples available for C, Java.
 
 <br><br>
 

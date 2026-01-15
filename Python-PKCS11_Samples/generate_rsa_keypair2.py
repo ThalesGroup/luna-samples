@@ -69,7 +69,7 @@ try:
 			Attribute.SIGN: True,
 			Attribute.DECRYPT: True,
 			Attribute.UNWRAP: False,
-			Attribute.EXTRACTABLE: False,
+			Attribute.EXTRACTABLE: True,
 			Attribute.MODIFIABLE: False,
 			Attribute.LABEL: keypair_label+"-private",
 		}

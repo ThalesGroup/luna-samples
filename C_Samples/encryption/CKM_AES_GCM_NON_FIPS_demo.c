@@ -109,11 +109,11 @@ void loadLunaLibrary()
 // Always a good idea to free up some memory before exiting.
 void freeMem()
 {
-        #ifdef OS_UNIX
-                dlclose(libHandle); // Close library handle on Unix/Linux
-        #else
-                FreeLibrary(libHandle); // Close library handle on Windows.
-        #endif
+	#ifdef OS_UNIX
+		dlclose(libHandle); // Close library handle on Unix/Linux
+	#else
+		FreeLibrary(libHandle); // Close library handle on Windows.
+	#endif
 	free(slotPin);
 	free(encryptedData);
 	free(decryptedData);
@@ -200,14 +200,14 @@ void initGCMParam()
 void decryptData(CK_ULONG dataLen)
 {
 	initGCMParam();
-        CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
-        CK_ULONG decLen = 0;
+	CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
+	CK_ULONG decLen = 0;
 
-        checkOperation(p11Func->C_DecryptInit(hSession, &mech, hAesKey),"C_DecryptInit");
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, NULL, &decLen),"C_Decrypt");
-        decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, decryptedData, &decLen),"C_Decrypt");
-        printf("\n>Encrypted data decrypted.\n");
+	checkOperation(p11Func->C_DecryptInit(hSession, &mech, hAesKey),"C_DecryptInit");
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, NULL, &decLen),"C_Decrypt");
+	decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, decryptedData, &decLen),"C_Decrypt");
+	printf("\n>Encrypted data decrypted.\n");
 }
 
 
@@ -216,15 +216,15 @@ void decryptData(CK_ULONG dataLen)
 void encryptData()
 {
 	initGCMParam();
-        CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
-        CK_ULONG encLen = 0;
-
-        checkOperation(p11Func->C_EncryptInit(hSession, &mech, hAesKey),"C_EncryptInit");
-        checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, NULL, &encLen),"C_Encrypt");
-        encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
+	CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
+	CK_ULONG encLen = 0;
+	
+	checkOperation(p11Func->C_EncryptInit(hSession, &mech, hAesKey),"C_EncryptInit");
+	checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, NULL, &encLen),"C_Encrypt");
+	encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
 	checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, encryptedData, &encLen),"C_Encrypt");
-        printf("\n>Data encrypted.\n");
-        decryptData(encLen);
+	printf("\n>Data encrypted.\n");
+	decryptData(encLen);
 }
 
 

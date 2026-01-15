@@ -10,8 +10,6 @@
         **********************************************************************************
 
 
-
-
         OBJECTIVE : This sample demonstrates how to use CKM_AES_GCM when using a Luna HSM configured to operate in FIPS mode.
 
 	The way CKM_AES_GCM works in FIPS mode is as follows :-
@@ -214,20 +212,20 @@ void trimIV(CK_ULONG encLen)
 // This function will decrypt data
 void decryptData(CK_ULONG dataLen)
 {
-        gcmParam.pIv = iv;
+	gcmParam.pIv = iv;
 	gcmParam.ulIvLen = 16;
 	gcmParam.ulIvBits = 128;
 	gcmParam.pAAD = aad;
 	gcmParam.ulAADLen = sizeof(aad)-1;
 	gcmParam.ulTagBits = tagBits;
 
-        CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
-        CK_ULONG decLen = 0;
-        checkOperation(p11Func->C_DecryptInit(hSession, &mech, hAesKey),"C_DecryptInit");
-        checkOperation(p11Func->C_Decrypt(hSession, encrypted, dataLen-16, NULL_PTR, &decLen),"C_Decrypt");
-        decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
-        checkOperation(p11Func->C_Decrypt(hSession, encrypted, dataLen-16, decryptedData, &dataLen),"C_Decrypt");
-        printf("\n> Data decrypted.\n");
+	CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
+	CK_ULONG decLen = 0;
+	checkOperation(p11Func->C_DecryptInit(hSession, &mech, hAesKey),"C_DecryptInit");
+	checkOperation(p11Func->C_Decrypt(hSession, encrypted, dataLen-16, NULL_PTR, &decLen),"C_Decrypt");
+	decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
+	checkOperation(p11Func->C_Decrypt(hSession, encrypted, dataLen-16, decryptedData, &dataLen),"C_Decrypt");
+	printf("\n> Data decrypted.\n");
 }
 
 
@@ -235,16 +233,16 @@ void decryptData(CK_ULONG dataLen)
 // This function will encrypt data
 void encryptData()
 {
-        CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
-        CK_ULONG encLen = 0;
-        checkOperation(p11Func->C_EncryptInit(hSession, &mech, hAesKey),"C_EncryptInit");
-        checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, NULL_PTR, &encLen),"C_Encrypt");
-        encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
-        checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, encryptedData, &encLen),"C_Encrypt");
-        printf("\n> Data encrypted.\n");
-        readIV(encLen);
-        trimIV(encLen);
-        decryptData(encLen);
+	CK_MECHANISM mech = {CKM_AES_GCM, &gcmParam, sizeof(gcmParam)};
+	CK_ULONG encLen = 0;
+	checkOperation(p11Func->C_EncryptInit(hSession, &mech, hAesKey),"C_EncryptInit");
+	checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, NULL_PTR, &encLen),"C_Encrypt");
+	encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
+	checkOperation(p11Func->C_Encrypt(hSession, rawData, sizeof(rawData)-1, encryptedData, &encLen),"C_Encrypt");
+	printf("\n> Data encrypted.\n");
+	readIV(encLen);
+	trimIV(encLen);
+	decryptData(encLen);
 }
 
 // Prints the syntax for executing this code.

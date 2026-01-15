@@ -109,11 +109,11 @@ void loadLunaLibrary()
 // Always a good idea to free up some memory before exiting.
 void freeMem()
 {
-        #ifdef OS_UNIX
-                dlclose(libHandle); // Close library handle on Unix/Linux
-        #else
-                FreeLibrary(libHandle); // Close library handle on Windows.
-        #endif
+	#ifdef OS_UNIX
+		dlclose(libHandle); // Close library handle on Unix/Linux
+	#else
+		FreeLibrary(libHandle); // Close library handle on Windows.
+	#endif
 	free(slotPin);
 	free(encryptedData);
 	free(decryptedData);
@@ -161,36 +161,36 @@ void disconnectFromLunaSlot()
 // This function generates RSA-2048 bit key for encryption and decryption
 void generateRSAKeyPair()
 {
-        CK_MECHANISM mech =  {CKM_RSA_PKCS_KEY_PAIR_GEN};
-        CK_ULONG mod = 2048;
-        CK_BYTE exp[] = "10001";
-        CK_ULONG yes = CK_TRUE;
-        CK_ULONG no = CK_FALSE;
+	CK_MECHANISM mech =  {CKM_RSA_PKCS_KEY_PAIR_GEN};
+	CK_ULONG mod = 2048;
+	CK_BYTE exp[] = "10001";
+	CK_ULONG yes = CK_TRUE;
+	CK_ULONG no = CK_FALSE;
 
-        CK_ATTRIBUTE attribPub[] =
-        {
-                {CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
-                {CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
-                {CKA_ENCRYPT,           &yes,           sizeof(CK_BBOOL)},
-                {CKA_VERIFY,            &no,            sizeof(CK_BBOOL)},
-                {CKA_MODULUS_BITS,      &mod,           sizeof(CK_ULONG)},
-                {CKA_PUBLIC_EXPONENT,   &exp,           sizeof(exp)-1},
-        };
-        CK_ULONG attribLenPub = sizeof(attribPub) / sizeof(*attribPub);
+	CK_ATTRIBUTE attribPub[] =
+	{
+		{CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
+		{CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
+		{CKA_ENCRYPT,           &yes,           sizeof(CK_BBOOL)},
+		{CKA_VERIFY,            &no,            sizeof(CK_BBOOL)},
+		{CKA_MODULUS_BITS,      &mod,           sizeof(CK_ULONG)},
+		{CKA_PUBLIC_EXPONENT,   &exp,           sizeof(exp)-1},
+	};
+	CK_ULONG attribLenPub = sizeof(attribPub) / sizeof(*attribPub);
 
-        CK_ATTRIBUTE attribPri[] =
-        {
-                {CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
-                {CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
-                {CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
-                {CKA_DECRYPT,           &yes,           sizeof(CK_BBOOL)},
-                {CKA_SIGN,              &no,            sizeof(CK_BBOOL)},
-                {CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
-                {CKA_EXTRACTABLE,       &no,            sizeof(CK_BBOOL)}
-        };
-        CK_ULONG attribLenPri = sizeof(attribPri) / sizeof(*attribPri);
+	CK_ATTRIBUTE attribPri[] =
+	{
+		{CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
+		{CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
+		{CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
+		{CKA_DECRYPT,           &yes,           sizeof(CK_BBOOL)},
+		{CKA_SIGN,              &no,            sizeof(CK_BBOOL)},
+		{CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
+		{CKA_EXTRACTABLE,       &no,            sizeof(CK_BBOOL)}
+	};
+	CK_ULONG attribLenPri = sizeof(attribPri) / sizeof(*attribPri);
 
-        checkOperation(p11Func->C_GenerateKeyPair(hSession, &mech, attribPub, attribLenPub, attribPri, attribLenPri, &hPublic, &hPrivate),"C_GenerateKeyPair");
+	checkOperation(p11Func->C_GenerateKeyPair(hSession, &mech, attribPub, attribLenPub, attribPri, attribLenPri, &hPublic, &hPrivate),"C_GenerateKeyPair");
 	printf("\n> RSA keypair generated : \n");
 	printf("  --> Private key Handle : %lu\n", hPrivate);
 	printf("  --> Public key Handle : %lu\n", hPublic);
@@ -201,12 +201,12 @@ void generateRSAKeyPair()
 // This function encrypt data
 CK_ULONG encryptData()
 {
-        CK_MECHANISM mech = {CKM_RSA_PKCS};
-        CK_ULONG encLen = 0;
-        checkOperation(p11Func->C_EncryptInit(hSession, &mech, hPublic),"C_EncryptInit");
-        checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), NULL_PTR, &encLen),"C_Encrypt");
-        encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
-        checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), encryptedData, &encLen),"C_Encrypt");
+	CK_MECHANISM mech = {CKM_RSA_PKCS};
+	CK_ULONG encLen = 0;
+	checkOperation(p11Func->C_EncryptInit(hSession, &mech, hPublic),"C_EncryptInit");
+	checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), NULL_PTR, &encLen),"C_Encrypt");
+	encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
+	checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), encryptedData, &encLen),"C_Encrypt");
 	printf("\n> Plaintext encrypted.\n");
         return encLen;
 }
@@ -216,12 +216,12 @@ CK_ULONG encryptData()
 // This function decrypts data
 void decryptData(CK_ULONG dataLen)
 {
-        CK_MECHANISM mech = {CKM_RSA_PKCS};
-        CK_ULONG decLen = 0;
-        checkOperation(p11Func->C_DecryptInit(hSession, &mech, hPrivate),"C_DecryptInit");
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, NULL_PTR, &decLen),"C_Decrypt");
-        decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
-        checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, decryptedData, &decLen),"C_Decrypt");
+	CK_MECHANISM mech = {CKM_RSA_PKCS};
+	CK_ULONG decLen = 0;
+	checkOperation(p11Func->C_DecryptInit(hSession, &mech, hPrivate),"C_DecryptInit");
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, NULL_PTR, &decLen),"C_Decrypt");
+	decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE);
+	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, decryptedData, &decLen),"C_Decrypt");
 	printf("\n> Encrypted data decrypted.\n");
 }
 
@@ -269,7 +269,7 @@ int main(int argc, char **argv[])
 	printf("\n> Results :- \n");
 	printf("  --> Plain text : %s\n", rawData);
 	printf("  --> Plain text as HEX : "); bytesToHex((CK_BYTE*)rawData, sizeof(rawData)-1);
-        printf("  --> Encrypted Data : "); bytesToHex(encryptedData, dataLen);
+	printf("  --> Encrypted Data : "); bytesToHex(encryptedData, dataLen);
 	printf("  --> Decrypted Data : "); bytesToHex(decryptedData, sizeof(rawData)-1);
 
 	freeMem();

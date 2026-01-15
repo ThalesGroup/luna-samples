@@ -238,10 +238,10 @@ int main(int argc, char **argv[])
 	connectToLunaSlot();
 
 	generateAESKey();
-        CK_ULONG encLen = encryptData();
-        decryptData(encLen);
-        printf("\n> Encrypted Data (HEX)\t\t: "); bytesToHex(encryptedData, encLen);
-        printf("\n> Decrypted Data (HEX)\t\t: "); bytesToHex(decryptedData, strlen(rawData)-1);
+	CK_ULONG encLen = encryptData();
+	decryptData(encLen);
+	printf("\n> Encrypted Data (HEX)\t\t: "); bytesToHex(encryptedData, encLen);
+	printf("\n> Decrypted Data (HEX)\t\t: "); bytesToHex(decryptedData, strlen(rawData)-1);
 	printf("\n> Plain Text\t\t\t: %s\n", rawData);
 	disconnectFromLunaSlot();
 	freeMem();

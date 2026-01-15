@@ -7,5 +7,6 @@
 | CA_SIMExtract_demo.c | Demonstrates how to use CA_SIMExtract function on SKS enabled Luna partition. |
 | CA_SIMInsert_demo.c | Demonstrates how to use CA_SIMInsert function on SKS enabled Luna partition. |
 | Per_Key_Authorization_demo.c | Demonstrates the usage of Per Key Authorization API. |
+| RemotePED_Connect_Sign_Disconnect.c | Demonstrates how to use a RemotePED with a Luna PCIe and a USB HSM. |
 
 For help with compiling and executing the code, please refer to the HOW_TO guide provided here : [HOW_TO](/C_Samples/HOW_TO.md).

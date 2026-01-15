@@ -126,9 +126,9 @@ void freeMem()
                 FreeLibrary(libHandle); // Close library handle on Windows.
         #endif
         free(slotPin);
-	free(encryptedData);
-	free(decryptedData);
-	free(ecPoint);
+        free(encryptedData);
+        free(decryptedData);
+        free(ecPoint);
 }
 
 
@@ -225,7 +225,7 @@ void deriveSecretKey(CK_OBJECT_HANDLE partyAPri, CK_OBJECT_HANDLE_PTR derived)
         CK_BBOOL yes = CK_TRUE;
         CK_BBOOL no = CK_FALSE;
         CK_ULONG keyLen = 32;
-	CK_BYTE sharedData[] = "0011235813213455";
+        CK_BYTE sharedData[] = "0011235813213455";
         CK_ECDH1_DERIVE_PARAMS params = {CKD_SHA1_KDF, sizeof(sharedData), sharedData, ecPointLen, ecPoint};
         CK_MECHANISM mech = {CKM_ECDH1_DERIVE, &params, sizeof(params)};
         CK_KEY_TYPE objType = CKK_AES;
@@ -307,9 +307,9 @@ int main(int argc, char **argv[])
 	printf("  --> Public Key Handle : %lu\n", partyAPub);
 
 	generateECKeys(&partyBPub, &partyBPri);
-        printf("\n> EC KeyPair generated for Party B.\n");
-        printf("  --> Private Key Handle : %lu\n", partyBPri);
-        printf("  --> Public Key Handle : %lu\n", partyBPub);
+	printf("\n> EC KeyPair generated for Party B.\n");
+	printf("  --> Private Key Handle : %lu\n", partyBPri);
+	printf("  --> Public Key Handle : %lu\n", partyBPub);
 
 	extractPublicKey(partyBPub);
 	printf("\n> Public key extracted for Party A.\n");
@@ -318,15 +318,15 @@ int main(int argc, char **argv[])
 	printf("  --> Secret Key Handle A : %lu\n", derivedKeyA);
 
 	extractPublicKey(partyAPub);
-        printf("\n> Public Key extracted for Party B.\n");
-        deriveSecretKey(partyBPri, &derivedKeyB);
-        printf("\n> Secret key derived for Party B\n");
-        printf("  --> Secret Key Handle B : %lu\n", derivedKeyB);
+	printf("\n> Public Key extracted for Party B.\n");
+	deriveSecretKey(partyBPri, &derivedKeyB);
+	printf("\n> Secret key derived for Party B\n");
+	printf("  --> Secret Key Handle B : %lu\n", derivedKeyB);
 
-        encryptData();
-        printf("\n> Party A has encrypted some data for Party B.");
-        decryptData();
-        printf("\n> Party B has decrypted the data received from Party A.\n\n");
+	encryptData();
+	printf("\n> Party A has encrypted some data for Party B.");
+	decryptData();
+	printf("\n> Party B has decrypted the data received from Party A.\n\n");
 
 	disconnectFromLunaSlot();
 	freeMem();
