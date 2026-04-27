@@ -1,8 +1,8 @@
         /*********************************************************************************\
         *                                                                                *
-        * This file is part of the "luna-samples" project.                               *
+        * This file is part of the "luna-samples" project.                       	 *
         *                                                                                *
-        * The " luna-samples" project is provided under the MIT license (see the         *
+        * The "luna-samples" project is provided under the MIT license (see the          *
         * following Web site for further details: https://mit-license.org/ ).            *
         *                                                                                *
         * Copyright © 2024 Thales Group                                                  *
@@ -10,11 +10,9 @@
         **********************************************************************************
 
 
-
-        OBJECTIVE : This sample demonstrates how to use CKM_RSA_PKCS mechanism for encryption using Luna HSM.
-
-	NOTE :- CKM_RSA_PKCS is not a FIPS approved mechanism therefore executing this sample on Luna HSM configured to be on FIPS mode would return CKR_MECHANISM_INVALID.
+        OBJECTIVE : This sample demonstrates how to generate a SHA256 hash.
 */
+
 
 
 
@@ -41,18 +39,12 @@
 #endif
 
 
-
 CK_FUNCTION_LIST *p11Func = NULL;
 CK_SESSION_HANDLE hSession = 0;
 CK_SLOT_ID slotId = 0; // slot id
 CK_BYTE *slotPin = NULL; // slot password
-
-CK_OBJECT_HANDLE hPrivate = 0; // Handle number of private key.
-CK_OBJECT_HANDLE hPublic = 0; // Handle number of public key.
-CK_BYTE *encryptedData = NULL; // for storing encrypted data.
-CK_BYTE *decryptedData = NULL; // for storing decrypted data.
-const CK_BYTE rawData[] = "Earth is the third planet of our Solar System.";
-
+CK_BYTE *hash = NULL; // store hash.
+CK_BYTE plainText[] = "Hello World";
 
 
 // Loads Luna cryptoki library
@@ -105,18 +97,16 @@ void loadLunaLibrary()
 }
 
 
-
 // Always a good idea to free up some memory before exiting.
 void freeMem()
 {
-	#ifdef OS_UNIX
-		dlclose(libHandle); // Close library handle on Unix/Linux
-	#else
-		FreeLibrary(libHandle); // Close library handle on Windows.
-	#endif
+        #ifdef OS_UNIX
+                dlclose(libHandle); // Close library handle on Unix/Linux
+        #else
+                FreeLibrary(libHandle); // Close library handle on Windows.
+        #endif
 	free(slotPin);
-	free(encryptedData);
-	free(decryptedData);
+	free(hash);
 }
 
 
@@ -158,83 +148,27 @@ void disconnectFromLunaSlot()
 
 
 
-// This function generates RSA-2048 bit key for encryption and decryption
-void generateRSAKeyPair()
+// CK_BYTE to hex.
+void printHex(CK_BYTE *arr, size_t arr_len)
 {
-	CK_MECHANISM mech =  {CKM_RSA_PKCS_KEY_PAIR_GEN};
-	CK_ULONG mod = 2048;
-	CK_BYTE exp[] = "10001";
-	CK_ULONG yes = CK_TRUE;
-	CK_ULONG no = CK_FALSE;
-
-	CK_ATTRIBUTE attribPub[] =
-	{
-		{CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
-		{CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
-		{CKA_ENCRYPT,           &yes,           sizeof(CK_BBOOL)},
-		{CKA_VERIFY,            &no,            sizeof(CK_BBOOL)},
-		{CKA_MODULUS_BITS,      &mod,           sizeof(CK_ULONG)},
-		{CKA_PUBLIC_EXPONENT,   &exp,           sizeof(exp)-1},
-	};
-	CK_ULONG attribLenPub = sizeof(attribPub) / sizeof(*attribPub);
-
-	CK_ATTRIBUTE attribPri[] =
-	{
-		{CKA_TOKEN,             &no,            sizeof(CK_BBOOL)},
-		{CKA_PRIVATE,           &yes,           sizeof(CK_BBOOL)},
-		{CKA_SENSITIVE,         &yes,           sizeof(CK_BBOOL)},
-		{CKA_DECRYPT,           &yes,           sizeof(CK_BBOOL)},
-		{CKA_SIGN,              &no,            sizeof(CK_BBOOL)},
-		{CKA_MODIFIABLE,        &no,            sizeof(CK_BBOOL)},
-		{CKA_EXTRACTABLE,       &no,            sizeof(CK_BBOOL)}
-	};
-	CK_ULONG attribLenPri = sizeof(attribPri) / sizeof(*attribPri);
-
-	checkOperation(p11Func->C_GenerateKeyPair(hSession, &mech, attribPub, attribLenPub, attribPri, attribLenPri, &hPublic, &hPrivate),"C_GenerateKeyPair");
-	printf("\n> RSA keypair generated : \n");
-	printf("  --> Private key Handle : %lu\n", hPrivate);
-	printf("  --> Public key Handle : %lu\n", hPublic);
+        for(int ctr=0; ctr<arr_len; ctr++)
+                printf("%02x", arr[ctr]);
 }
 
 
 
-// This function encrypt data
-CK_ULONG encryptData()
+// Generates hash
+void computeMessageDigest()
 {
-	CK_MECHANISM mech = {CKM_RSA_PKCS};
-	CK_ULONG encLen = 0;
-	checkOperation(p11Func->C_EncryptInit(hSession, &mech, hPublic),"C_EncryptInit");
-	checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), NULL_PTR, &encLen),"C_Encrypt");
-	encryptedData = (CK_BYTE*)calloc(encLen, sizeof(CK_BYTE));
-	checkOperation(p11Func->C_Encrypt(hSession, (CK_BYTE_PTR)rawData, strlen(rawData), encryptedData, &encLen),"C_Encrypt");
-	printf("\n> Plaintext encrypted.\n");
-        return encLen;
-}
+	CK_MECHANISM mech = {CKM_SHA256};
+	CK_ULONG digestLen = 0;
 
-
-
-// This function decrypts data
-void decryptData(CK_ULONG dataLen)
-{
-	CK_MECHANISM mech = {CKM_RSA_PKCS};
-	CK_ULONG decLen = 0;
-	checkOperation(p11Func->C_DecryptInit(hSession, &mech, hPrivate),"C_DecryptInit");
-	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, NULL_PTR, &decLen),"C_Decrypt");
-	decryptedData = (CK_BYTE*)calloc(decLen, sizeof(CK_BYTE));
-	checkOperation(p11Func->C_Decrypt(hSession, encryptedData, dataLen, decryptedData, &decLen),"C_Decrypt");
-	printf("\n> Encrypted data decrypted.\n");
-}
-
-
-
-// This function displays data in bytes as HEX
-void bytesToHex(const CK_BYTE *data, CK_ULONG dataLen)
-{
-        for(int i = 0; i < dataLen; i++)
-        {
-                printf("%02x", data[i]);
-        }
-        printf("\n\n");
+	checkOperation(p11Func->C_DigestInit(hSession, &mech), "C_DigestInit");
+	checkOperation(p11Func->C_Digest(hSession, plainText, sizeof(plainText)-1, NULL,  &digestLen), "C_Digest");
+	hash = (CK_BYTE*)malloc(digestLen);
+	checkOperation(p11Func->C_Digest(hSession, plainText, sizeof(plainText)-1, hash, &digestLen), "C_Digest");
+	printf("\n> Message Digest (SHA-256) : ");
+	printHex(hash, digestLen);
 }
 
 
@@ -261,17 +195,8 @@ int main(int argc, char **argv[])
 
 	loadLunaLibrary();
 	connectToLunaSlot();
-	generateRSAKeyPair();
-	CK_ULONG dataLen = encryptData();
-	decryptData(dataLen);
+	computeMessageDigest();
 	disconnectFromLunaSlot();
-
-	printf("\n> Results :- \n");
-	printf("  --> Plain text : %s\n", rawData);
-	printf("  --> Plain text as HEX : "); bytesToHex((CK_BYTE*)rawData, sizeof(rawData)-1);
-	printf("  --> Encrypted Data : "); bytesToHex(encryptedData, dataLen);
-	printf("  --> Decrypted Data : "); bytesToHex(decryptedData, sizeof(rawData)-1);
-
 	freeMem();
 	return 0;
 }

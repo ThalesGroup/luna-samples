@@ -1,5 +1,5 @@
 CC=gcc
-INCLUDES=/usr/safenet/lunaclient/samples/include -I/usr/safenet/lunaclient/sdk/include -I/usr/safenet/lunaclient/sdk/external
+INCLUDES=/usr/safenet/lunaclient/sdk/include -I/usr/safenet/lunaclient/samples/include -I/usr/safenet/lunaclient/sdk/external
 LINKFLAGS=-ldl
 OUTDIR=bin/
 $(shell mkdir -p bin)
@@ -9,11 +9,9 @@ $(shell mkdir -p bin)
 default: all
 
 
-
 # Connect_and_Disconnect sample.
 Connect_and_Disconnect: Connect_and_Disconnect.c
 	$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o ${OUTDIR}/Connect_and_Disconnect Connect_and_Disconnect.c
-
 
 
 # Samples to demonstrate various encryption mechanisms.
@@ -167,7 +165,6 @@ UnwrapTemplates_demo: object_management/UnwrapTemplates_demo.c
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/obj_management/UnwrapTemplates_demo object_management/UnwrapTemplates_demo.c
 
 
-
 # Samples to demonstrate miscellaneous pkcs11 tasks.
 C_GenerateRandom_demo: misc/C_GenerateRandom_demo.c
 	@mkdir -p bin/misc
@@ -219,7 +216,9 @@ Per_Key_Authorization_demo: sfnt_extension/Per_Key_Authorization_demo.c
 	@mkdir -p bin/sfntExtension
 	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/sfntExtension/Per_Key_Authorization_demo sfnt_extension/Per_Key_Authorization_demo.c
 
-
+RemotePED_Connect_Sign_Disconnect: sfnt_extension/RemotePED_Connect_Sign_Disconnect.c
+	@mkdir -p bin/sfntExtension
+	@$(CC) -DOS_UNIX ${LINKFLAGS} -I$(INCLUDES) -o bin/sfntExtension/RemotePED_Connect_Sign_Disconnect sfnt_extension/RemotePED_Connect_Sign_Disconnect.c
 
 
 # Samples to demonstrate how to use PQC algorithms.
@@ -273,8 +272,24 @@ Unwrap_PQC_PrivateKey_demo: pqc/Unwrap_PQC_PrivateKey_demo.c
 
 
 
+
+
+# Samples to demonstrate how to compute message digest. (Hashing).
+CKM_SHA256_demo: hashing/CKM_SHA256_demo.c
+	@mkdir -p bin/hashing
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/hashing/CKM_SHA256_demo hashing/CKM_SHA256_demo.c
+
+CKM_SHA3_256_demo: hashing/CKM_SHA3_256_demo.c
+	@mkdir -p bin/hashing
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/hashing/CKM_SHA3_256_demo hashing/CKM_SHA3_256_demo.c
+
+CKM_SHAKE_256_demo: hashing/CKM_SHAKE_256_demo.c
+	@mkdir -p bin/hashing
+	@$(CC) -DOS_UNIX $(LINKFLAGS) -I$(INCLUDES) -o bin/hashing/CKM_SHAKE_256_demo hashing/CKM_SHAKE_256_demo.c
+
+
 # Compile all sample codes.
-all: encryption signing keygen objmgmt misc sfntExtension pqc
+all: encryption signing keygen objmgmt misc sfntExtension pqc hashing
 
 
 # Compile and build all encryption samples.
@@ -316,7 +331,7 @@ MultiThread_Signing_demo List_Available_Slots
 
 # Compile and build all SafeNet extension samples.
 sfntExtension: Show_Partition_Policies CA_SIMInsert_demo CA_SIMExtract_demo \
-Per_Key_Authorization_demo
+Per_Key_Authorization_demo RemotePED_Connect_Sign_Disconnect
 	@echo " - SafeNet Extension samples have build successfully. Executables are inside bin/sfntExtension directory."
 
 
@@ -325,6 +340,11 @@ pqc: CKM_HSS_KEY_PAIR_GEN_demo CKM_HSS_sign_demo CKM_HSS_verify_demo CKM_ML_DSA_
 CKM_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_Sign_Verify_demo CKM_HASH_ML_DSA_SHA3_512_Sign_Verify_demo CKM_ML_KEM_Encapsulate_Decapsulate_demo \
 Wrap_PQC_PrivateKey_demo Unwrap_PQC_PrivateKey_demo CKM_EXTMU_ML_DSA_Sign_Verify_demo
 	@echo " - PQC samples have build successfully. Executables are inside bin/pqc directory."
+
+
+# Compile and build all Message Digest samples.
+hashing: CKM_SHA256_demo CKM_SHA3_256_demo CKM_SHAKE_256_demo
+	@echo " - Hashing samples have build successfully. Executables are inside bin/hashing directory."
 
 
 clean:
@@ -360,6 +380,11 @@ list_samples:
 	@echo "- CKM_RSA_PKCS_KEY_PAIR_GEN_demo"
 	@echo "- CKM_SHA256_KEY_DERIVATION_demo"
 	@echo "- CKM_EC_EDWARDS_KEY_PAIR_GEN_demo"
+	@echo
+	@echo "[ MESSAGE DIGEST ]"
+	@echo "- CKM_SHA256_demo"
+	@echo "- CKM_SHA3_256_demo"
+	@echo "- CKM_SHAKE_256_demo"
 	@echo
 	@echo "[ SIGNING SAMPLES ]"
 	@echo "- CKM_AES_CMAC_demo"
@@ -397,6 +422,7 @@ list_samples:
 	@echo "- CA_SIMExtract_demo"
 	@echo "- CA_SIMInsert_demo"
 	@echo "- Per_Key_Authorization_demo"
+	@echo "- RemotePED_Connect_Sign_Disconnect"
 	@echo
 	@echo "[ PQC SAMPLES ]"
 	@echo "- CKM_HSS_sign_demo"
@@ -421,14 +447,15 @@ help:
 	@echo "------------"
 	@echo
 	@echo "- make               : Defaults to building all source files."
-	@echo "- make all	    : Builds all sample codes."
+	@echo "- make all           : Builds all sample codes."
 	@echo "- make encryption    : Builds all encryption samples."
+	@echo "- make hashing       : Builds all message digest samples."
 	@echo "- make signing       : Builds all signing samples."
 	@echo "- make keygen        : Builds all samples for key generation."
 	@echo "- make objmgmt       : Builds all object management samples."
 	@echo "- make misc          : Builds all miscellaneous samples."
 	@echo "- make sfntExtension : Builds all SafeNet Extension samples."
-	@echo "- make pqc	    : Builds all PQC samples."
+	@echo "- make pqc           : Builds all PQC samples."
 	@echo "- make clean         : Deletes all binaries."
 	@echo "- make list_samples  : Displays the list of all available samples."
 	@echo
