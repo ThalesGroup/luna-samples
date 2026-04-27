@@ -6,6 +6,7 @@
 | DIRECTORY | DESCRIPTION | NUMBER OF SAMPLES |
 | --- | --- | --- |
 | signing | samples that shows how to perform signing and signature verification. | 7 |
+| hashing | samples to demonstrate how to compute message digest. | 3 |
 | generating_keys | samples to demonstrates how to generate different types of cryptographic keys. | 10 |
 | encryption | samples to demonstrate how to perform encryption | 8 |
 | object_management | samples to demonstrate how to manage keys | 10 |
