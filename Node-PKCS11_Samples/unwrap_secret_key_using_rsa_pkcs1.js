@@ -42,6 +42,8 @@ const [slotLabel, privateKeyLabel, unwrappedKeyLabel, wrappedKeyFile] =
     console.log("\t> Private key found : ", privateKeyLabel);
 
     const wrapped = fs.readFileSync(wrappedKeyFile);
+    // Do not set CKA_VALUE_LEN — Luna derives AES length from the unwrapped key material
+    // (matches Python unwrap samples; hardcoding 16/24/32 breaks other sizes).
     session.unwrapKey(graphene.MechanismEnum.RSA_PKCS, unwrappingKey, wrapped, {
       class: graphene.ObjectClass.SECRET_KEY,
       keyType: graphene.KeyType.AES,
@@ -52,7 +54,6 @@ const [slotLabel, privateKeyLabel, unwrappedKeyLabel, wrappedKeyFile] =
       encrypt: true,
       decrypt: true,
       extractable: true,
-      valueLen: 32,
     });
     console.log("Key unwrapped successfully.\n");
   });

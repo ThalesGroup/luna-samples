@@ -51,6 +51,7 @@ const [slotLabel, privateKeyLabel, unwrappedKeyLabel, wrappedKeyFile] =
       ),
     };
 
+    // Do not set CKA_VALUE_LEN — Luna derives AES length from the unwrapped key material.
     session.unwrapKey(alg, unwrappingKey, wrapped, {
       class: graphene.ObjectClass.SECRET_KEY,
       keyType: graphene.KeyType.AES,
@@ -61,7 +62,6 @@ const [slotLabel, privateKeyLabel, unwrappedKeyLabel, wrappedKeyFile] =
       encrypt: true,
       decrypt: true,
       extractable: true,
-      valueLen: 32,
     });
     console.log("Key unwrapped successfully.\n");
   });
