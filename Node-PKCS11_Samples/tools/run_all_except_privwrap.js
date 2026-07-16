@@ -171,12 +171,7 @@ for (let i = 0; i < tests.length; i++) {
   const ok = allowExit.includes(code);
   results.push({ n, name, args, code, ok });
   if (!ok) failed++;
-  const passedSoFar = results.filter((x) => x.ok).length;
-  console.log(
-    ok
-      ? `>>> PASS (${code})  [${n}/${total}]  running total ${passedSoFar}/${n}`
-      : `>>> FAIL (${code})  [${n}/${total}]  running total ${passedSoFar}/${n}`
-  );
+  console.log(ok ? `>>> PASS (${code})  [${n}/${total}]` : `>>> FAIL (${code})  [${n}/${total}]`);
 }
 
 console.log("\n========== SUMMARY ==========");
