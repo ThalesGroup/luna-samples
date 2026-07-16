@@ -235,12 +235,35 @@ async function withSession(slotLabel, fn, opts = {}) {
     }
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
+    const code = err && err.code != null ? err.code : null;
+    // HSM/policy/env limits — sample is OK; partition rejected the operation.
+    const envSkip =
+      code === 258 /* CKR_USER_PIN_NOT_INITIALIZED */ ||
+      code === 112 /* CKR_MECHANISM_INVALID */ ||
+      code === 105 /* CKR_KEY_NOT_WRAPPABLE */ ||
+      code === 84 /* CKR_FUNCTION_NOT_SUPPORTED */ ||
+      /CKR_USER_PIN_NOT_INITIALIZED|CKR_MECHANISM_INVALID|CKR_KEY_NOT_WRAPPABLE|CKR_FUNCTION_NOT_SUPPORTED/i.test(
+        msg
+      );
     if (/CKR_PIN_INCORRECT|PIN_INCORRECT|pin incorrect/i.test(msg)) {
       console.log("Incorrect pin.\n");
+      process.exitCode = 1;
+    } else if (envSkip) {
+      console.log(
+        "HSM rejected the operation (policy / FIPS / role not initialized)."
+      );
+      if (code === 258) {
+        console.log(
+          "Crypto User PIN is not initialized on this partition (set LUNA_CU_PIN after initializing CU)."
+        );
+      }
+      console.log("Detail:", msg, code != null ? "(code " + code + ")" : "");
+      console.log();
+      process.exitCode = 2;
     } else {
       console.error(err);
+      process.exitCode = 1;
     }
-    process.exitCode = 1;
   } finally {
     try {
       mod.finalize();

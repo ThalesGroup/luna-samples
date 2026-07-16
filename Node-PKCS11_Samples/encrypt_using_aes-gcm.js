@@ -50,14 +50,14 @@ const slotLabel = process.argv[2];
       params: new graphene.AesGcm240Params(iv, aad, 128),
     };
 
-    const cipher = session.createCipher(alg, secretKey);
-    let encrypted = cipher.update(Buffer.from(plaintext, "utf8"));
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    // Luna AES-GCM is single-part only (C_Encrypt / C_Decrypt); Update is unsupported.
+    const pt = Buffer.from(plaintext, "utf8");
+    const encBuf = Buffer.alloc(pt.length + 64);
+    const encrypted = session.createCipher(alg, secretKey).once(pt, encBuf);
     console.log("Plaintext encrypted (AES-GCM).");
 
-    const decipher = session.createDecipher(alg, secretKey);
-    let decrypted = decipher.update(encrypted);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    const decBuf = Buffer.alloc(encrypted.length);
+    const decrypted = session.createDecipher(alg, secretKey).once(encrypted, decBuf);
     console.log("Encrypted text decrypted.\n");
 
     console.log("Plain text\t: ", plaintext);
