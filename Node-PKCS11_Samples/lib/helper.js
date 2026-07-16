@@ -8,6 +8,7 @@
  *                      (default: C:\Program Files\SafeNet\LunaClient\cryptoki.dll on Windows,
  *                       /usr/safenet/lunaclient/lib/libCryptoki2_64.so elsewhere)
  *   LUNA_PIN         - Crypto Officer PIN (skips interactive prompt)
+ *   LUNA_CU_PIN      - Crypto User PIN (for login_crypto_user.js)
  *   SAMPLE_PLAINTEXT - optional plaintext for encrypt/sign demos
  */
 
@@ -19,8 +20,15 @@ const DEFAULT_P11_LIB =
     ? "C:\\Program Files\\SafeNet\\LunaClient\\cryptoki.dll"
     : "/usr/safenet/lunaclient/lib/libCryptoki2_64.so";
 
-/** Luna vendor-defined CKM_AES_KWP */
+/** Luna vendor-defined CKM_AES_KW / CKM_AES_KWP */
+const CKM_AES_KW = 0x80000170;
 const CKM_AES_KWP = 0x80000171;
+
+/** Standard CKM_DES3_CMAC (not always exported by graphene-pk11) */
+const CKM_DES3_CMAC = 0x00000138;
+
+/** Luna Crypto User (CKU_CRYPTO_USER / limited user) */
+const CKU_CRYPTO_USER = 0x80000001;
 
 function getP11Lib() {
   return process.env.P11_LIB || DEFAULT_P11_LIB;
@@ -94,6 +102,11 @@ async function getPin(promptText = "Crypto Officer Password: ") {
   return promptSecret(promptText);
 }
 
+async function getCuPin(promptText = "Crypto User Password: ") {
+  if (process.env.LUNA_CU_PIN) return process.env.LUNA_CU_PIN;
+  return promptSecret(promptText);
+}
+
 async function getPlaintext(promptText = "Enter plaintext: ", maxLen) {
   let text = process.env.SAMPLE_PLAINTEXT;
   if (text == null || text === "") {
@@ -136,10 +149,20 @@ function findKeyByLabel(session, label, objectClass) {
 
 /**
  * Load module, open RW session, login, run fn(session, mod, slot), then cleanup.
+ * @param {object} [opts]
+ * @param {number} [opts.userType] - graphene UserType or Luna CKU_CRYPTO_USER
+ * @param {string} [opts.pin] - override PIN (otherwise LUNA_PIN / prompt)
  */
-async function withSession(slotLabel, fn) {
+async function withSession(slotLabel, fn, opts = {}) {
   const pkcs11Library = requireP11Lib();
-  const pin = await getPin();
+  const userType =
+    opts.userType != null ? opts.userType : graphene.UserType.USER;
+  const pin =
+    opts.pin != null
+      ? opts.pin
+      : userType === CKU_CRYPTO_USER
+        ? await getCuPin()
+        : await getPin();
 
   const mod = graphene.Module.load(pkcs11Library, "Luna");
   mod.initialize();
@@ -159,7 +182,7 @@ async function withSession(slotLabel, fn) {
       graphene.SessionFlag.RW_SESSION | graphene.SessionFlag.SERIAL_SESSION
     );
     try {
-      session.login(pin);
+      session.login(pin, userType);
       console.log("Login success.");
       await fn(session, mod, slot);
     } finally {
@@ -173,7 +196,7 @@ async function withSession(slotLabel, fn) {
   } catch (err) {
     const msg = err && err.message ? err.message : String(err);
     if (/CKR_PIN_INCORRECT|PIN_INCORRECT|pin incorrect/i.test(msg)) {
-      console.log("Incorrect crypto officer pin.\n");
+      console.log("Incorrect pin.\n");
     } else {
       console.error(err);
     }
@@ -187,6 +210,11 @@ async function withSession(slotLabel, fn) {
   }
 }
 
+/** C_SeedRandom — not supported on some Cloud HSM images. */
+function seedRandom(session, seedBuf) {
+  session.lib.C_SeedRandom(session.handle, Buffer.from(seedBuf));
+}
+
 function usageAndExit(lines) {
   for (const line of lines) console.log(line);
   process.exit(1);
@@ -198,18 +226,23 @@ function toHex(buf) {
 
 module.exports = {
   graphene,
+  CKM_AES_KW,
   CKM_AES_KWP,
+  CKM_DES3_CMAC,
+  CKU_CRYPTO_USER,
   DEFAULT_P11_LIB,
   getP11Lib,
   requireP11Lib,
   prompt,
   promptSecret,
   getPin,
+  getCuPin,
   getPlaintext,
   findSlotByLabel,
   findObjectsByLabel,
   findKeyByLabel,
   withSession,
+  seedRandom,
   usageAndExit,
   toHex,
 };

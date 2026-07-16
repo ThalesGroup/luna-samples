@@ -88,17 +88,33 @@ must("encrypt_using_aes-gcm.js", [slot]);
 must("encrypt_using_des3-cbc-pad.js", [slot]);
 must("encrypt_using_rsa_pkcs1.js", [slot]);
 must("encrypt_using_rsa_oaep.js", [slot]);
+must("encrypt_using_rsa_x509.js", [slot]);
 
 // --- sign / mac ---
 must("sign_using_aes_cmac.js", [slot]);
+must("sign_using_des3_cmac.js", [slot]);
+must("sign_using_hmac_sha1.js", [slot]);
 must("sign_using_hmac_sha256.js", [slot]);
 must("sign_using_rsa.js", [slot]);
 must("sign_using_rsa_pkcs1.js", [slot]);
 must("sign_using_rsa_sha256.js", [slot]);
 must("sign_using_rsa_pss.js", [slot]);
 must("sign_using_rsa_pss_sha256.js", [slot]);
+must("sign_using_rsa_x9_31.js", [slot]);
+must("sign_using_ecdsa.js", [slot]);
 must("sign_using_ecdsa_sha256.js", [slot]);
 must("sign_using_ecdsa_sha512.js", [slot]);
+must("derive_using_sha256.js", [slot]);
+must("create_data_object.js", [slot]);
+must("create_known_keys.js", [slot]);
+must("copy_object.js", [slot]);
+must("set_object_attribute.js", [slot]);
+must("get_object_attributes.js", [slot]);
+must("seed_random.js", [slot], { allowExit: [0, 2] });
+must("get_mechanism_info.js", [slot, "AES_GCM"]);
+must("wrap_secret_key_using_aes_cbc_pad.js", [slot]);
+must("wrap_secret_key_using_des3_cbc_pad.js", [slot]);
+must("wrap_secret_key_using_aes_kw.js", [slot]);
 
 // --- wrap/unwrap secret keys (NOT private-key wrap) ---
 const wAes = path.join(tmp, "aes.dat");
@@ -154,7 +170,10 @@ must("unwrap_secret_key_using_rsa_oaep_sha256.js", [
 ]);
 
 console.log("\n========== SUMMARY ==========");
-console.log("Skipped: wrap_rsa_private_key_using_aes.js (per request)");
+console.log(
+  "Skipped: wrap_rsa_private_key_using_aes.js (needs private wrap policy)"
+);
+console.log("Skipped: login_crypto_user.js (needs LUNA_CU_PIN)");
 console.log("Temp dir:", tmp);
 for (const r of results) {
   console.log((r.ok ? "PASS" : "FAIL") + "  " + r.name + "  exit=" + r.code);
