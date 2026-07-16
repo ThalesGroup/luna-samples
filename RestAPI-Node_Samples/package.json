@@ -1,0 +1,7 @@
+{
+  "name": "restapi-node-samples",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js ports of Thales luna-samples RestAPI-Python samples",
+  "license": "MIT"
+}

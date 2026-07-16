@@ -24,7 +24,7 @@ Features -
 	- PKCS#11.
 	- Luna JSP.
 	- Luna RestAPI
-+ **Languages Covered**: Samples available for C, Java.
++ **Languages Covered**: Samples available for C, Java, Python, and Node.js.
 
 <br><br>
 
@@ -36,6 +36,8 @@ Features -
 | LunaJSP_Samples | Java samples that uses LunaProvider (Luna JSP). |
 | RestAPI-Python_Samples | Python3 based Luna REST-API samples for Luna Network HSM. |
 | Python-PKCS11_Samples | Python3 based samples to demonstrate how to use python-pkcs11. |
+| Node-PKCS11_Samples | Node.js PKCS#11 samples using graphene-pk11 (Cryptoki). |
+| RestAPI-Node_Samples | Node.js Luna REST-API samples for Luna Network HSM. |
 | Luna-FM_Samples | additional samples codes to demonstrate and test FM capability of Luna HSM. |
 
 <br><br>
