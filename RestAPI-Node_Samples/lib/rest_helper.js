@@ -190,10 +190,20 @@ async function restFetch(url, options = {}) {
 async function openSession(hostname, username, password) {
   const headers = authHeaders(username, password);
   const url = baseUrl(hostname) + "/auth/session";
-  const res = await restFetch(url, { method: "POST", headers });
+  // Luna OpenAPI: POST /auth/session with Basic auth and empty JSON body
+  const res = await restFetch(url, { method: "POST", headers, body: "{}" });
   if (res.status !== 204) {
+    const detail =
+      res.json && res.json.id
+        ? " (" + res.json.id + (res.json.message ? ": " + res.json.message : "") + ")"
+        : "";
     throw new Error(
-      "Failed to open a session with : " + hostname + " (HTTP " + res.status + ")"
+      "Failed to open a session with : " +
+        hostname +
+        " (HTTP " +
+        res.status +
+        ")" +
+        detail
     );
   }
   const setCookie = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
