@@ -5,6 +5,7 @@
   "description": "Node.js ports of Thales luna-samples Python-PKCS11 samples",
   "license": "MIT",
   "dependencies": {
-    "graphene-pk11": "^2.3.6"
+    "graphene-pk11": "^2.3.6",
+    "koffi": "^3.1.1"
   }
 }

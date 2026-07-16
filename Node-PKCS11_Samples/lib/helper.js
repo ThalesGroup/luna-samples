@@ -27,8 +27,33 @@ const CKM_AES_KWP = 0x80000171;
 /** Standard CKM_DES3_CMAC (not always exported by graphene-pk11) */
 const CKM_DES3_CMAC = 0x00000138;
 
+/** Digest / PQC-adjacent / Edwards (PKCS#11 3.x + Luna vendor) */
+const CKM_SHA3_256 = 0x000002b0;
+const CKM_SHAKE_256 = 0x80000f01; // Luna vendor XOF (std 0x2B3 often absent)
+const CKM_EC_EDWARDS_KEY_PAIR_GEN = 0x00001055;
+const CKM_EDDSA = 0x00001057;
+const CKK_EC_EDWARDS = 0x00000040;
+/** Ed25519 curve OID 1.3.6.1.4.1.11591.15.1 (same as C sample) */
+const ED25519_EC_PARAMS = Buffer.from([
+  0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01,
+]);
+
+const CKM_PKCS5_PBKD2 = 0x000003b0;
+const CKM_NIST_PRF_KDF = 0x80000a02;
+const CK_NIST_PRF_KDF_AES_CMAC = 0x00000002;
+const LUNA_PRF_KDF_ENCODING_SCHEME_1 = 0x00000000;
+
+/** Luna vendor: limit how many crypto ops a key may perform */
+const CKA_USAGE_LIMIT = 0x80000200;
+
 /** Luna Crypto User (CKU_CRYPTO_USER / limited user) */
 const CKU_CRYPTO_USER = 0x80000001;
+
+function u32(n) {
+  const b = Buffer.alloc(4);
+  b.writeUInt32LE(n >>> 0, 0);
+  return b;
+}
 
 function getP11Lib() {
   return process.env.P11_LIB || DEFAULT_P11_LIB;
@@ -229,7 +254,19 @@ module.exports = {
   CKM_AES_KW,
   CKM_AES_KWP,
   CKM_DES3_CMAC,
+  CKM_SHA3_256,
+  CKM_SHAKE_256,
+  CKM_EC_EDWARDS_KEY_PAIR_GEN,
+  CKM_EDDSA,
+  CKK_EC_EDWARDS,
+  ED25519_EC_PARAMS,
+  CKM_PKCS5_PBKD2,
+  CKM_NIST_PRF_KDF,
+  CK_NIST_PRF_KDF_AES_CMAC,
+  LUNA_PRF_KDF_ENCODING_SCHEME_1,
+  CKA_USAGE_LIMIT,
   CKU_CRYPTO_USER,
+  u32,
   DEFAULT_P11_LIB,
   getP11Lib,
   requireP11Lib,

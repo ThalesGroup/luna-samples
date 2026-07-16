@@ -23,12 +23,11 @@ $env:SAMPLE_PLAINTEXT = "hello luna"     # optional for encrypt/sign demos
 ```powershell
 node enumerate_slots.js
 node login_logout.js myPartition
-node generate_aes_key.js myPartition myAesKey 256
-node sign_using_rsa_sha256.js myPartition
-node encrypt_using_aes-gcm.js myPartition
-node derive_using_sha256.js myPartition
-node wrap_secret_key_using_aes_kw.js myPartition
-node create_known_keys.js myPartition
+node digest_using_sha3_256.js myPartition
+node digest_using_shake_256.js myPartition 50
+node sign_using_eddsa.js myPartition
+node usage_limit_demo.js myPartition 3
+node multi_thread_signing.js myPartition 4 10
 node pqc_mechanism_probe.js myPartition
 ```
 
@@ -37,20 +36,25 @@ node pqc_mechanism_probe.js myPartition
 | Area | Status |
 |------|--------|
 | Python PKCS#11 set | Full 1:1 |
-| C/JSP encrypt / sign / MAC / digest / wrap (common mechs) | Covered (incl. AES_KW, AES_CBC_PAD, DES3, RSA X.509 / X9.31) |
+| C/JSP encrypt / sign / MAC / digest / wrap (common mechs) | Covered |
+| SHA3-256 / SHAKE-256 | Covered (`digest_using_sha3_256.js`, `digest_using_shake_256.js`) |
+| Ed25519 (Edwards / EDDSA) | Covered (`generate_eddsa_keypair.js`, `sign_using_eddsa.js`) |
+| Usage limit (`CKA_USAGE_LIMIT`) | Covered (`usage_limit_demo.js`) |
+| Multi-thread signing | Covered (`multi_thread_signing.js`) |
 | Object mgmt (create/find/list/get/set/copy/destroy) | Covered |
 | Import known secret key (`CreateKnownKeys`) | `create_known_keys.js` |
-| Key derivation (SHA256_KEY_DERIVATION, ECDH) | Covered |
-| Crypto User login | `login_crypto_user.js` (needs CU PIN on partition) |
-| Seed RNG | `seed_random.js` (may be unsupported on some Cloud HSM images) |
+| Key derivation (SHA256, ECDH) | Covered |
+| PBKDF2 / NIST PRF KDF | Samples present; often exit `2` on FIPS / param-ABI reject |
+| DSA | Domain params + keygen sample; keypair may exit `2` on some partitions |
+| Crypto User login | `login_crypto_user.js` |
+| Seed RNG | `seed_random.js` |
 | Private-key wrap (AES / AES_KWP) | Present; needs partition policy 1 |
 | **PQC** (ML-DSA / ML-KEM / HSS) | Probe only — deferred |
 | **Luna FM** | Not ported |
 | Java LunaKeyStore / LunaProvider-only | N/A (use PKCS#11 find/login) |
-| SafeNet vendor extensions (SIM, Remote PED, CA_*, per-key auth, partition policies API) | Not ported (outside standard Cryptoki via graphene) |
-| Multi-thread signing / usage-limit demos | Not ported |
-| SHA3 / SHAKE / Ed25519 / PBKDF2 / NIST PRF / DSA domain params | Not ported (mech often absent, or needs custom param marshalling) |
+| SafeNet vendor extensions (SIM, Remote PED, CA_*, per-key auth) | Not ported |
 
 These samples are for learning and testing only — not production use.
 
 PIN prompts mask input when run on a TTY (or set `LUNA_PIN` / `LUNA_CU_PIN`).
+Exit code `2` means the sample ran but the HSM rejected the mechanism (policy / FIPS / firmware), not a script crash.
