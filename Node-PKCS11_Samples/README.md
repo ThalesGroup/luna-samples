@@ -44,8 +44,8 @@ node pqc_mechanism_probe.js myPartition
 | Object mgmt (create/find/list/get/set/copy/destroy) | Covered |
 | Import known secret key (`CreateKnownKeys`) | `create_known_keys.js` |
 | Key derivation (SHA256, ECDH) | Covered |
-| PBKDF2 / NIST PRF KDF | Samples present; often exit `2` on FIPS / param-ABI reject |
-| DSA | Domain params + keygen sample; keypair may exit `2` on some partitions |
+| PBKDF2 / NIST PRF KDF | Covered (`derive_using_pbkd2.js`, `derive_using_nist_prf_kdf.js`) |
+| DSA | Covered (`generate_dsa_keypair.js`, DSA-2048 domain params + sign/verify) |
 | Crypto User login | `login_crypto_user.js` |
 | Seed RNG | `seed_random.js` |
 | Private-key wrap (AES / AES_KWP) | Present; needs partition policy 1 |

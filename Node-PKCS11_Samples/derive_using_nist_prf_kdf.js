@@ -10,7 +10,7 @@
 
  * OBJECTIVE:
  * - Derive an AES key with Luna CKM_NIST_PRF_KDF (mirrors C CKM_NIST_PRF_KDF_demo).
- * - Exit code 2 if the HSM rejects the mechanism/params.
+ * - Exits 2 if the partition policy rejects the mechanism.
  */
 
 "use strict";
@@ -38,7 +38,9 @@ if (process.argv.length !== 3) {
 }
 const slotLabel = process.argv[2];
 
-const NIST = koffi.struct("CK_PRF_KDF_PARAMS_Node", {
+// PKCS#11 mandates 1-byte struct packing on Windows (#pragma pack(1)),
+// so use koffi.pack — koffi.struct's natural alignment breaks the ABI.
+const NIST = koffi.pack("CK_PRF_KDF_PARAMS_Node", {
   prfType: "uint32",
   pLabel: "void *",
   ulLabelLen: "uint32",
@@ -98,9 +100,6 @@ const NIST = koffi.struct("CK_PRF_KDF_PARAMS_Node", {
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
       console.log("NIST PRF KDF failed:", msg);
-      console.log(
-        "Mech is advertised on many Luna images but param ABI / policy can still reject it.\n"
-      );
       process.exitCode = 2;
     }
   });

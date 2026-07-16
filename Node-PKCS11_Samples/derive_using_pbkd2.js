@@ -10,7 +10,7 @@
 
  * OBJECTIVE:
  * - Derive an AES key with CKM_PKCS5_PBKD2 (mirrors C CKM_PKCS5_PBKD2_demo).
- * - Not FIPS-approved. Exit code 2 if the HSM rejects the mechanism/params.
+ * - Not FIPS-approved; exits 2 if the partition policy rejects the mechanism.
  */
 
 "use strict";
@@ -35,7 +35,9 @@ if (process.argv.length !== 3) {
 }
 const slotLabel = process.argv[2];
 
-const PBKD2 = koffi.struct("CK_PKCS5_PBKD2_PARAMS2_Node", {
+// PKCS#11 mandates 1-byte struct packing on Windows (#pragma pack(1)),
+// so use koffi.pack — koffi.struct's natural alignment breaks the ABI.
+const PBKD2 = koffi.pack("CK_PKCS5_PBKD2_PARAMS2_Node", {
   saltSource: "uint32",
   pSaltSourceData: "void *",
   ulSaltSourceDataLen: "uint32",
@@ -88,12 +90,7 @@ const PBKD2 = koffi.struct("CK_PKCS5_PBKD2_PARAMS2_Node", {
     } catch (err) {
       const msg = err && err.message ? err.message : String(err);
       console.log("PBKD2 failed:", msg);
-      console.log(
-        "Often blocked on FIPS partitions (CKR_MECHANISM_INVALID) or when"
-      );
-      console.log(
-        "PKCS#11 param marshalling does not match the client ABI (CKR_MECHANISM_PARAM_INVALID).\n"
-      );
+      console.log("Note: CKM_PKCS5_PBKD2 is disallowed on FIPS-restricted partitions.\n");
       process.exitCode = 2;
     }
   });

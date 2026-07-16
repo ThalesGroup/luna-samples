@@ -11,7 +11,7 @@
  * OBJECTIVE:
  * - Probe whether this slot advertises PQC mechanisms (ML-DSA / ML-KEM / HSS).
  * - C/JSP PQC samples need firmware 7.8.9+ (HSS) or 7.9.0+ (ML-DSA/ML-KEM) and
- *   Luna Client 10.9+. This lab appliance (often 7.7.x) will report them as absent.
+ *   Luna Client 10.9+. Older firmware reports these mechanisms as absent.
  * - Full PQC keygen/sign samples are not shipped here until graphene-pk11 / pkcs11js
  *   expose the PKCS#11 3.2 PQC templates and a firmware that supports them is available.
  */
@@ -74,8 +74,9 @@ const PQC_HINTS = [/ML_DSA/i, /ML_KEM/i, /HSS/i, /KYBER/i, /DILITHIUM/i];
       console.log(
         "This partition cannot run those PQC samples until firmware is upgraded.\n"
       );
-      process.exitCode = 2;
     }
+    // Probe completed successfully whether PQC mechs are present or not.
+    process.exitCode = 0;
   } finally {
     try {
       mod.finalize();
