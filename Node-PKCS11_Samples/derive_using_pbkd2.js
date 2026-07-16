@@ -35,18 +35,21 @@ if (process.argv.length !== 3) {
 }
 const slotLabel = process.argv[2];
 
-// PKCS#11 mandates 1-byte struct packing on Windows (#pragma pack(1)),
-// so use koffi.pack — koffi.struct's natural alignment breaks the ABI.
-const PBKD2 = koffi.pack("CK_PKCS5_PBKD2_PARAMS2_Node", {
-  saltSource: "uint32",
+// Windows PKCS#11 uses #pragma pack(1) + 32-bit CK_ULONG; Linux uses
+// natural alignment + 64-bit CK_ULONG. Match the host ABI accordingly.
+const ULONG = process.platform === "win32" ? "uint32" : "ulong";
+const defineMechStruct =
+  process.platform === "win32" ? koffi.pack.bind(koffi) : koffi.struct.bind(koffi);
+const PBKD2 = defineMechStruct("CK_PKCS5_PBKD2_PARAMS2_Node", {
+  saltSource: ULONG,
   pSaltSourceData: "void *",
-  ulSaltSourceDataLen: "uint32",
-  iterations: "uint32",
-  prf: "uint32",
+  ulSaltSourceDataLen: ULONG,
+  iterations: ULONG,
+  prf: ULONG,
   pPrfData: "void *",
-  ulPrfDataLen: "uint32",
+  ulPrfDataLen: ULONG,
   pPassword: "void *",
-  ulPasswordLen: "uint32",
+  ulPasswordLen: ULONG,
 });
 
 (async () => {

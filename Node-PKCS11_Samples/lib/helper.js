@@ -20,6 +20,13 @@ const DEFAULT_P11_LIB =
     ? "C:\\Program Files\\SafeNet\\LunaClient\\cryptoki.dll"
     : "/usr/safenet/lunaclient/lib/libCryptoki2_64.so";
 
+/**
+ * PKCS#11 CK_ULONG is unsigned long:
+ *   Windows (LLP64) → 4 bytes, Linux/macOS (LP64) → 8 bytes.
+ * Attribute values and CK_ULONG mechanism params must use this width.
+ */
+const CK_ULONG_SIZE = process.platform === "win32" ? 4 : 8;
+
 /** Luna vendor-defined CKM_AES_KW / CKM_AES_KWP */
 const CKM_AES_KW = 0x80000170;
 const CKM_AES_KWP = 0x80000171;
@@ -49,11 +56,19 @@ const CKA_USAGE_LIMIT = 0x80000200;
 /** Luna Crypto User (CKU_CRYPTO_USER / limited user) */
 const CKU_CRYPTO_USER = 0x80000001;
 
-function u32(n) {
-  const b = Buffer.alloc(4);
-  b.writeUInt32LE(n >>> 0, 0);
+/** Encode a number as a little-endian CK_ULONG Buffer for raw PKCS#11 calls. */
+function ulong(n) {
+  const b = Buffer.alloc(CK_ULONG_SIZE);
+  if (CK_ULONG_SIZE === 4) {
+    b.writeUInt32LE(n >>> 0, 0);
+  } else {
+    b.writeBigUInt64LE(BigInt(n >>> 0), 0);
+  }
   return b;
 }
+
+/** @deprecated Prefer ulong(); kept as alias for call-site compatibility. */
+const u32 = ulong;
 
 function getP11Lib() {
   return process.env.P11_LIB || DEFAULT_P11_LIB;
@@ -266,6 +281,8 @@ module.exports = {
   LUNA_PRF_KDF_ENCODING_SCHEME_1,
   CKA_USAGE_LIMIT,
   CKU_CRYPTO_USER,
+  CK_ULONG_SIZE,
+  ulong,
   u32,
   DEFAULT_P11_LIB,
   getP11Lib,

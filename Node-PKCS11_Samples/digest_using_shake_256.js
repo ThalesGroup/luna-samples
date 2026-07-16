@@ -38,7 +38,7 @@ const outLen = parseInt(process.argv[3] || "50", 10);
 (async () => {
   const plaintext = await getPlaintext("Enter data to digest : ");
   await withSession(slotLabel, async (session) => {
-    // Luna CK_ULONG is 4 bytes on Windows; param is desired XOF length.
+    // Mechanism param is CK_ULONG (platform width via u32/ulong helper).
     const hash = session
       .createDigest({ name: CKM_SHAKE_256, params: u32(outLen) })
       .once(Buffer.from(plaintext, "utf8"));

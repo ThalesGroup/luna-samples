@@ -5,10 +5,12 @@ Node.js ports of the `Python-PKCS11_Samples` from [ThalesGroup/luna-samples](htt
 ## Requirements
 
 - Node.js 18+
-- Luna Client installed and configured
+- Luna Client or DPoD client installed and configured
 - `npm install` in this directory
 
 ## Environment
+
+**Windows (PowerShell):**
 
 ```powershell
 $env:ChrystokiConfigurationPath = "C:\Program Files\SafeNet\LunaClient"
@@ -17,6 +19,22 @@ $env:LUNA_PIN = "<crypto-officer-pin>"
 $env:LUNA_CU_PIN = "<crypto-user-pin>"   # only for login_crypto_user.js
 $env:SAMPLE_PLAINTEXT = "hello luna"     # optional for encrypt/sign demos
 ```
+
+**Linux (bash)** — on-prem Luna Client defaults to
+`/usr/safenet/lunaclient/lib/libCryptoki2_64.so`. For a DPoD min-client
+extracted from `cvclient-min.tar`:
+
+```bash
+source /path/to/dpod-client/setenv   # sets ChrystokiConfigurationPath
+export P11_LIB=/path/to/dpod-client/libs/64/libCryptoki2.so
+export LUNA_PIN="<crypto-officer-pin>"
+export LUNA_CU_PIN="<crypto-user-pin>"
+export SAMPLE_PLAINTEXT="hello luna"
+```
+
+Samples that pack PKCS#11 structs (`PBKD2`, NIST PRF KDF, `CK_ULONG`
+attribute values) select Windows `#pragma pack(1)` / 32-bit `CK_ULONG` vs
+Linux natural alignment / 64-bit `CK_ULONG` automatically.
 
 ## Examples
 
