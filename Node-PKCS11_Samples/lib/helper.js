@@ -5,7 +5,8 @@
  *
  * Env:
  *   P11_LIB          - path to cryptoki.dll / libCryptoki2_64.so
- *                      (default: C:\Program Files\SafeNet\LunaClient\cryptoki.dll)
+ *                      (default: C:\Program Files\SafeNet\LunaClient\cryptoki.dll on Windows,
+ *                       /usr/safenet/lunaclient/lib/libCryptoki2_64.so elsewhere)
  *   LUNA_PIN         - Crypto Officer PIN (skips interactive prompt)
  *   SAMPLE_PLAINTEXT - optional plaintext for encrypt/sign demos
  */
@@ -22,20 +23,15 @@ const DEFAULT_P11_LIB =
 const CKM_AES_KWP = 0x80000171;
 
 function getP11Lib() {
-  const lib = process.env.P11_LIB || DEFAULT_P11_LIB;
-  return lib;
+  return process.env.P11_LIB || DEFAULT_P11_LIB;
 }
 
 function requireP11Lib() {
-  const lib = getP11Lib();
-  if (!process.env.P11_LIB && process.platform !== "win32") {
-    // On non-Windows still allow default path, but warn if unset like Python samples.
-  }
   if (!process.env.P11_LIB) {
-    // Match Python sample messaging when unset — still proceed with platform default.
-    // Callers that want strict mode can check process.env.P11_LIB themselves.
+    console.log("*** P11_LIB environment variable not set — using default. ***");
+    console.log("> set P11_LIB=" + DEFAULT_P11_LIB + "\n");
   }
-  return lib;
+  return getP11Lib();
 }
 
 function prompt(question) {
@@ -51,9 +47,51 @@ function prompt(question) {
   });
 }
 
+/** Prompt without echoing characters (best-effort). */
+function promptSecret(question) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return prompt(question);
+  }
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    const stdout = process.stdout;
+    stdout.write(question);
+    stdin.resume();
+    stdin.setRawMode(true);
+    stdin.setEncoding("utf8");
+    let value = "";
+    const onData = (char) => {
+      if (char === "\n" || char === "\r" || char === "\u0004") {
+        stdin.setRawMode(false);
+        stdin.pause();
+        stdin.removeListener("data", onData);
+        stdout.write("\n");
+        resolve(value);
+        return;
+      }
+      if (char === "\u0003") {
+        stdin.setRawMode(false);
+        process.exit(1);
+      }
+      if (char === "\u007f" || char === "\b") {
+        if (value.length) {
+          value = value.slice(0, -1);
+          stdout.clearLine(0);
+          stdout.cursorTo(0);
+          stdout.write(question);
+        }
+        return;
+      }
+      value += char;
+      stdout.write("*");
+    };
+    stdin.on("data", onData);
+  });
+}
+
 async function getPin(promptText = "Crypto Officer Password: ") {
   if (process.env.LUNA_PIN) return process.env.LUNA_PIN;
-  return prompt(promptText);
+  return promptSecret(promptText);
 }
 
 async function getPlaintext(promptText = "Enter plaintext: ", maxLen) {
@@ -61,8 +99,8 @@ async function getPlaintext(promptText = "Enter plaintext: ", maxLen) {
   if (text == null || text === "") {
     text = await prompt(promptText);
   }
-  if (maxLen != null && text.length > maxLen) {
-    throw new Error(`Plaintext too long (max ${maxLen}).`);
+  if (maxLen != null && Buffer.byteLength(text, "utf8") > maxLen) {
+    throw new Error(`Plaintext too long (max ${maxLen} bytes).`);
   }
   return text;
 }
@@ -97,7 +135,7 @@ function findKeyByLabel(session, label, objectClass) {
 }
 
 /**
- * Load module, open RW session, login, run fn(session, mod), then cleanup.
+ * Load module, open RW session, login, run fn(session, mod, slot), then cleanup.
  */
 async function withSession(slotLabel, fn) {
   const pkcs11Library = requireP11Lib();
@@ -165,6 +203,7 @@ module.exports = {
   getP11Lib,
   requireP11Lib,
   prompt,
+  promptSecret,
   getPin,
   getPlaintext,
   findSlotByLabel,

@@ -186,6 +186,8 @@ function explainNotWrappable(privateKey) {
       const msg = err && err.message ? err.message : String(err);
       if (/CKR_KEY_NOT_WRAPPABLE|KEY_NOT_WRAPPABLE/i.test(msg)) {
         explainNotWrappable(privateKey);
+        process.exitCode = 1;
+        return;
       }
       throw err;
     }

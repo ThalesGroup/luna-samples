@@ -32,7 +32,14 @@ if (process.argv.length !== 3) {
 const slotLabel = process.argv[2];
 
 (async () => {
-  const plaintext = await getPlaintext("Enter plaintext to encrypt : ");
+  let plaintext = await getPlaintext("Enter plaintext to encrypt : ");
+  // AES_CBC (no pad) requires a multiple of 16 bytes — pad for the demo if needed.
+  const len = Buffer.byteLength(plaintext, "utf8");
+  if (len % 16 !== 0) {
+    plaintext = plaintext + " ".repeat(16 - (len % 16));
+    console.log("(padded plaintext to AES block boundary for AES_CBC demo)");
+  }
+
   await withSession(slotLabel, async (session) => {
     const secretKey = session.generateKey(graphene.KeyGenMechanism.AES, {
       keyType: graphene.KeyType.AES,

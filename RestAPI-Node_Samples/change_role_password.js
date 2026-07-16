@@ -22,6 +22,7 @@ const {
   openSession,
   getHsmSerial,
   prompt,
+  promptSecret,
   usageAndExit,
 } = require("./lib/rest_helper");
 
@@ -48,9 +49,9 @@ const username = process.argv[3];
         ? null
         : await prompt("Partition serial/id (required for co/cu/pso) : ");
 
-    const oldPassword = await prompt("  Current " + role + " Password : ");
-    const newPassword = await prompt("  New " + role + " Password : ");
-    const confirm = await prompt("  Confirm " + role + " Password : ");
+    const oldPassword = await promptSecret("  Current " + role + " Password : ");
+    const newPassword = await promptSecret("  New " + role + " Password : ");
+    const confirm = await promptSecret("  Confirm " + role + " Password : ");
     if (newPassword !== confirm) {
       console.log("ERROR : Passwords do not match.");
       process.exit(1);

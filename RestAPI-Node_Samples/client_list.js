@@ -51,9 +51,9 @@ const username = process.argv[3];
     process.exit(1);
   }
 
-  const allClients = list.json.clients;
+  const allClients = (list.json && list.json.clients) || [];
   let maxLen = 10;
-  for (const c of allClients) maxLen = Math.max(maxLen, c.clientID.length);
+  for (const c of allClients) maxLen = Math.max(maxLen, String(c.clientID).length);
 
   console.log(
     "CLIENT ID".padEnd(maxLen),

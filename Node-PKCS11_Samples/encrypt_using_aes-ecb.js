@@ -33,10 +33,10 @@ const slotLabel = process.argv[2];
 
 (async () => {
   let plaintext = await getPlaintext("Enter plaintext to encrypt : ");
-  // pad to 16 for demo if needed
-  const pad = 16 - (Buffer.byteLength(plaintext) % 16 || 16);
-  if (Buffer.byteLength(plaintext) % 16 !== 0) {
-    plaintext = plaintext + " ".repeat(pad === 16 ? 0 : pad);
+  // AES_ECB requires a multiple of 16 bytes — pad for the demo if needed.
+  const len = Buffer.byteLength(plaintext, "utf8");
+  if (len % 16 !== 0) {
+    plaintext = plaintext + " ".repeat(16 - (len % 16));
     console.log("(padded plaintext to AES block boundary for AES_ECB demo)");
   }
 

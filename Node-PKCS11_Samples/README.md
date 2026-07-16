@@ -28,3 +28,5 @@ node sign_using_rsa_sha256.js myPartition
 ```
 
 These samples are for learning and testing only — not production use.
+
+PIN prompts mask input when run on a TTY (or set `LUNA_PIN` to skip the prompt).
