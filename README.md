@@ -24,6 +24,8 @@ Features -
 	- PKCS#11.
 	- Luna JSP.
 	- Luna RestAPI
+	- Node.js PKCS#11 (graphene-pk11 / Cryptoki).
+	- Node.js RestAPI
 + **Languages Covered**: Samples available for C, Java, Python, and Node.js.
 
 <br><br>
