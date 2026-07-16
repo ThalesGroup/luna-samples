@@ -14,7 +14,14 @@
  */
 
 "use strict";
-const { graphene, withSession, usageAndExit, getPlaintext, toHex } = require("./lib/helper");
+const {
+  graphene,
+  withSession,
+  usageAndExit,
+  getPlaintext,
+  toHex,
+  ulong,
+} = require("./lib/helper");
 
 console.log("\nencrypt_using_aes-ctr.js\n");
 
@@ -30,12 +37,9 @@ if (process.argv.length !== 3) {
 
 const slotLabel = process.argv[2];
 
-/** Pack CK_AES_CTR_PARAMS: CK_ULONG ulCounterBits + CK_BYTE cb[16] (Windows ULONG = 4). */
+/** Pack CK_AES_CTR_PARAMS: CK_ULONG ulCounterBits + CK_BYTE cb[16]. */
 function aesCtrParams(iv16, counterBits = 128) {
-  const buf = Buffer.alloc(20);
-  buf.writeUInt32LE(counterBits, 0);
-  Buffer.from(iv16).copy(buf, 4, 0, 16);
-  return buf;
+  return Buffer.concat([ulong(counterBits), Buffer.from(iv16).subarray(0, 16)]);
 }
 
 (async () => {
