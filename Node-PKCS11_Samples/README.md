@@ -47,6 +47,30 @@ node sign_using_eddsa.js myPartition
 node usage_limit_demo.js myPartition 3
 node multi_thread_signing.js myPartition 4 10
 node pqc_mechanism_probe.js myPartition
+node pqc_mldsa_sign_verify.js myPartition
+```
+
+## PQC samples (raw `pkcs11js`)
+
+Ports of `C_Samples/pqc` + `LunaJSP_Samples/pqc`. Requires client **10.9+** and firmware with the mechanism (ML-DSA/ML-KEM: **7.9+**, HSS: **7.8.9+**). Session objects only unless noted.
+
+| Script | C / JSP counterpart |
+|--------|---------------------|
+| `pqc_mechanism_probe.js` | (inventory) |
+| `pqc_mldsa_generate_keypair.js` | `CKM_ML_DSA_KEY_PAIR_GEN_demo` / `GenerateMLDSAKeyPair` |
+| `pqc_mldsa_sign_verify.js` | `CKM_ML_DSA_Sign_Verify_demo` / `SignUsing_MLDSA` |
+| `pqc_hash_mldsa_sign_verify.js` | `CKM_HASH_ML_DSA_Sign_Verify_demo` / `SignUsing_HASH_MLDSA` |
+| `pqc_hash_mldsa_sha3_512_sign_verify.js` | `CKM_HASH_ML_DSA_SHA3_512_*` / `SignUsing_MLDSAwithSHA3_*` |
+| `pqc_extmu_mldsa_sign_verify.js` | `CKM_EXTMU_ML_DSA_*` / `SignUsing_EXTMU_MLDSA` |
+| `pqc_mlkem_generate_keypair.js` | `CKM_ML_KEM_KEY_PAIR_GEN_demo` / `GenerateMLKEMKeyPair` |
+| `pqc_mlkem_encapsulate_decapsulate.js` | `CKM_ML_KEM_Encapsulate_*` / `KeyEncapsulation_MLKEM` (via `CA_EncapsulateKey`) |
+| `pqc_hss_generate_keypair.js` | `CKM_HSS_KEY_PAIR_GEN_demo` |
+| `pqc_hss_sign_verify.js` | `CKM_HSS_sign` + `CKM_HSS_verify` (combined) |
+| `pqc_wrap_unwrap_private_key.js` | `Wrap_PQC_*` + `Unwrap_PQC_*` (combined; needs wrap policy) |
+
+```powershell
+node pqc_mldsa_sign_verify.js myPartition
+node pqc_mlkem_encapsulate_decapsulate.js myPartition 768
 ```
 
 ## Coverage
@@ -67,10 +91,10 @@ node pqc_mechanism_probe.js myPartition
 | Crypto User login | `login_crypto_user.js` |
 | Seed RNG | `seed_random.js` |
 | Private-key wrap (AES / AES_KWP) | Present; needs partition policy 1 |
-| **PQC** (ML-DSA / ML-KEM / HSS) | Probe only — deferred |
+| **PQC** (ML-DSA / ML-KEM / HSS / wrap) | Covered via raw `pkcs11js` (+ `CA_*` for ML-KEM encaps) |
 | **Luna FM** | Not ported |
 | Java LunaKeyStore / LunaProvider-only | N/A (use PKCS#11 find/login) |
-| SafeNet vendor extensions (SIM, Remote PED, CA_*, per-key auth) | Not ported |
+| SafeNet vendor extensions (SIM, Remote PED, per-key auth) | Not ported (except PQC `CA_EncapsulateKey` / `CA_DecapsulateKey`) |
 
 These samples are for learning and testing only — not production use.
 

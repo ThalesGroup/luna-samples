@@ -87,12 +87,11 @@ const PQC_TYPES = new Set([
       for (const x of found) {
         console.log("  -", x.name.padEnd(32), "0x" + x.id.toString(16));
       }
-      console.log(
-        "\nFirmware advertises PQC. Full Node ML-DSA/ML-KEM demos are not in this branch yet"
-      );
-      console.log(
-        "(need PKCS#11 3.2 param templates in the Node binding). Use C/JSP PQC samples for crypto ops.\n"
-      );
+      console.log("\nFirmware advertises PQC. Node samples (raw pkcs11js):");
+      console.log("  node pqc_mldsa_generate_keypair.js <slot_label> [44|65|87]");
+      console.log("  node pqc_mldsa_sign_verify.js <slot_label>");
+      console.log("  node pqc_mlkem_encapsulate_decapsulate.js <slot_label> [512|768|1024]");
+      console.log("See README.md PQC section for the full list.\n");
     } else {
       console.log("\nNo PQC mechanisms advertised on this slot.");
       console.log("C/JSP requirements (for reference):");
