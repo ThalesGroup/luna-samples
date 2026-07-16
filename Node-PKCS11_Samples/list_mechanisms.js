@@ -14,6 +14,7 @@
 
 "use strict";
 const { graphene, requireP11Lib, findSlotByLabel, usageAndExit } = require("./lib/helper");
+const { mechanismName } = require("./lib/mechanism_names");
 
 console.log("\nlist_mechanisms.js\n");
 
@@ -44,11 +45,20 @@ const slotLabel = process.argv[2];
     const mechs = slot.getMechanisms();
     console.log("Token :", slotLabel);
     console.log("Mechanisms available :", mechs.length, "\n");
-    console.log("NAME".padEnd(40), "MIN", "MAX", "FLAGS");
+    console.log(
+      "NAME".padEnd(42),
+      "ID".padEnd(12),
+      "MIN",
+      "MAX",
+      "FLAGS"
+    );
     for (let i = 0; i < mechs.length; i++) {
       const m = mechs.items(i);
+      const id = Number(m.type) >>> 0;
+      const name = mechanismName(id, m.name);
       console.log(
-        String(m.name).padEnd(40),
+        name.padEnd(42),
+        ("0x" + id.toString(16)).padEnd(12),
         String(m.minKeySize).padStart(4),
         String(m.maxKeySize).padStart(4),
         "0x" + Number(m.flags).toString(16)
