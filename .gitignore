@@ -8,6 +8,17 @@ node_modules/
 .env.*
 !.env.example
 
+# Luna client / DPoD local config (never commit)
+crystoki.ini
+Chrystoki.conf
+Chrome*.token
+*.tok
+client-cert.pem
+client-key.pem
+server-cert.pem
+oauth*.json
+*client_secret*
+
 # OS / editor
 .DS_Store
 Thumbs.db
