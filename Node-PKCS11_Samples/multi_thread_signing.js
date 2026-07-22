@@ -10,12 +10,15 @@
 
  * OBJECTIVE:
  * - Multi-session parallel signing (mirrors C MultiThread_Signing_demo).
- * - One login, one RSA keypair, then N worker threads each open a session and sign.
+ * - Main thread: C_Initialize once, login once, generate RSA keypair.
+ * - Each worker: C_OpenSession only (no re-init, no re-login), sign, close.
+ *
+ * Note: PKCS#11 login is application-wide — child sessions inherit the
+ * authenticated state from the main session. Do not C_Finalize in workers.
  */
 
 "use strict";
 const { Worker, isMainThread, workerData, parentPort } = require("worker_threads");
-const path = require("path");
 const {
   graphene,
   requireP11Lib,
@@ -24,46 +27,51 @@ const {
   usageAndExit,
 } = require("./lib/helper");
 
+/** C_Initialize is process-global; workers may see ALREADY_INITIALIZED. */
+function safeInitialize(mod) {
+  try {
+    mod.initialize();
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    if (!/ALREADY_INITIALIZED|already initialized/i.test(msg)) throw err;
+  }
+}
+
 if (!isMainThread) {
   (async () => {
-    const { p11Lib, slotLabel, pin, keyLabel, ops, threadId } = workerData;
+    const { p11Lib, slotLabel, keyLabel, ops, threadId } = workerData;
     const mod = graphene.Module.load(p11Lib, "Luna");
-    mod.initialize();
+    // Same process as main — library is already initialized (like C pthreads).
+    safeInitialize(mod);
+    const slot = findSlotByLabel(mod, slotLabel);
+    if (!slot) throw new Error("slot not found: " + slotLabel);
+    // Mirror C signData(): open session only — no C_Login.
+    const session = slot.open(
+      graphene.SessionFlag.RW_SESSION | graphene.SessionFlag.SERIAL_SESSION
+    );
     try {
-      const slot = findSlotByLabel(mod, slotLabel);
-      if (!slot) throw new Error("slot not found: " + slotLabel);
-      const session = slot.open(
-        graphene.SessionFlag.RW_SESSION | graphene.SessionFlag.SERIAL_SESSION
+      const objs = session.find({
+        class: graphene.ObjectClass.PRIVATE_KEY,
+        label: keyLabel,
+      });
+      if (!objs.length) throw new Error("private key not found: " + keyLabel);
+      const priv = objs.items(0);
+      const data = Buffer.from(
+        "Hello World, I've been waiting for the chance to see your face."
       );
-      try {
-        session.login(pin, graphene.UserType.USER);
-        const objs = session.find({
-          class: graphene.ObjectClass.PRIVATE_KEY,
-          label: keyLabel,
-        });
-        if (!objs.length) throw new Error("private key not found: " + keyLabel);
-        const priv = objs.items(0);
-        const data = Buffer.from(
-          "Hello World, I've been waiting for the chance to see your face."
-        );
-        for (let i = 0; i < ops; i++) {
-          session
-            .createSign(graphene.MechanismEnum.SHA256_RSA_PKCS, priv)
-            .once(data);
-        }
-        parentPort.postMessage({
-          ok: true,
-          threadId,
-          ops,
-        });
-      } finally {
-        try {
-          session.logout();
-        } catch (_) {}
-        session.close();
+      for (let i = 0; i < ops; i++) {
+        session
+          .createSign(graphene.MechanismEnum.SHA256_RSA_PKCS, priv)
+          .once(data);
       }
+      parentPort.postMessage({
+        ok: true,
+        threadId,
+        ops,
+      });
     } finally {
-      // Do NOT C_Finalize here — main thread still owns the PKCS#11 library.
+      session.close();
+      // Do NOT logout or C_Finalize — main thread still owns the library.
     }
   })().catch((err) => {
     parentPort.postMessage({
@@ -143,23 +151,28 @@ if (!(nThreads > 0) || !(ops > 0)) {
     for (let i = 0; i < nThreads; i++) {
       workers.push(
         new Promise((resolve) => {
+          let settled = false;
+          const done = (msg) => {
+            if (settled) return;
+            settled = true;
+            resolve(msg);
+          };
           const w = new Worker(__filename, {
             workerData: {
               p11Lib,
               slotLabel,
-              pin,
               keyLabel,
               ops,
               threadId: i,
             },
           });
-          w.on("message", (msg) => resolve(msg));
+          w.on("message", done);
           w.on("error", (err) =>
-            resolve({ ok: false, threadId: i, error: err.message })
+            done({ ok: false, threadId: i, error: err.message })
           );
           w.on("exit", (code) => {
             if (code !== 0)
-              resolve({
+              done({
                 ok: false,
                 threadId: i,
                 error: "worker exit " + code,

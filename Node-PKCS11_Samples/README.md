@@ -46,6 +46,7 @@ node digest_using_shake_256.js myPartition 50
 node sign_using_eddsa.js myPartition
 node usage_limit_demo.js myPartition 3
 node multi_thread_signing.js myPartition 4 10
+node multi_thread_keygen.js myPartition --compare 5
 node pqc_mechanism_probe.js myPartition
 node pqc_mldsa_sign_verify.js myPartition
 ```
@@ -83,6 +84,7 @@ node pqc_mlkem_encapsulate_decapsulate.js myPartition 768
 | Ed25519 (Edwards / EDDSA) | Covered (`generate_eddsa_keypair.js`, `sign_using_eddsa.js`) |
 | Usage limit (`CKA_USAGE_LIMIT`) | Covered (`usage_limit_demo.js`) |
 | Multi-thread signing | Covered (`multi_thread_signing.js`) |
+| Multi-thread keygen (+ compare) | Covered (`multi_thread_keygen.js`) |
 | Object mgmt (create/find/list/get/set/copy/destroy) | Covered |
 | Import known secret key (`CreateKnownKeys`) | `create_known_keys.js` |
 | Key derivation (SHA256, ECDH) | Covered |
