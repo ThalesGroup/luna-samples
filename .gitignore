@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Local / generated
+*.log
+*.dat
+.env
+.env.*
+!.env.example
+Node-PKCS11_Samples/tools/*_run.log
+Node-PKCS11_Samples/tools/last_*.log
+
+# Luna client / DPoD local config (never commit)
+crystoki.ini
+Chrystoki.conf
+Chrome*.token
+*.tok
+client-cert.pem
+client-key.pem
+server-cert.pem
+oauth*.json
+*client_secret*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node / npm local noise
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local compile/output from C/JSP demos — never commit
+C_Samples/**/build/
+LunaJSP_Samples/**/build/

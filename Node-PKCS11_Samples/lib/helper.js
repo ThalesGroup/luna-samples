@@ -1,0 +1,325 @@
+"use strict";
+
+/**
+ * Shared helpers for Node-PKCS11 Luna samples (graphene-pk11).
+ *
+ * Env:
+ *   P11_LIB          - path to cryptoki.dll / libCryptoki2_64.so
+ *                      (default: C:\Program Files\SafeNet\LunaClient\cryptoki.dll on Windows,
+ *                       /usr/safenet/lunaclient/lib/libCryptoki2_64.so elsewhere)
+ *   LUNA_PIN         - Crypto Officer PIN (skips interactive prompt)
+ *   LUNA_CU_PIN      - Crypto User PIN (for login_crypto_user.js)
+ *   SAMPLE_PLAINTEXT - optional plaintext for encrypt/sign demos
+ */
+
+const readline = require("readline");
+const graphene = require("graphene-pk11");
+
+const DEFAULT_P11_LIB =
+  process.platform === "win32"
+    ? "C:\\Program Files\\SafeNet\\LunaClient\\cryptoki.dll"
+    : "/usr/safenet/lunaclient/lib/libCryptoki2_64.so";
+
+/**
+ * PKCS#11 CK_ULONG is unsigned long:
+ *   Windows (LLP64) → 4 bytes, Linux/macOS (LP64) → 8 bytes.
+ * Attribute values and CK_ULONG mechanism params must use this width.
+ */
+const CK_ULONG_SIZE = process.platform === "win32" ? 4 : 8;
+
+/** Luna vendor-defined CKM_AES_KW / CKM_AES_KWP */
+const CKM_AES_KW = 0x80000170;
+const CKM_AES_KWP = 0x80000171;
+
+/** Standard CKM_DES3_CMAC (not always exported by graphene-pk11) */
+const CKM_DES3_CMAC = 0x00000138;
+
+/** Digest / PQC-adjacent / Edwards (PKCS#11 3.x + Luna vendor) */
+const CKM_SHA3_256 = 0x000002b0;
+const CKM_SHAKE_256 = 0x80000f01; // Luna vendor XOF (std 0x2B3 often absent)
+const CKM_EC_EDWARDS_KEY_PAIR_GEN = 0x00001055;
+const CKM_EDDSA = 0x00001057;
+const CKK_EC_EDWARDS = 0x00000040;
+/** Ed25519 curve OID 1.3.6.1.4.1.11591.15.1 (same as C sample) */
+const ED25519_EC_PARAMS = Buffer.from([
+  0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01,
+]);
+
+const CKM_PKCS5_PBKD2 = 0x000003b0;
+const CKM_NIST_PRF_KDF = 0x80000a02;
+const CK_NIST_PRF_KDF_AES_CMAC = 0x00000002;
+const LUNA_PRF_KDF_ENCODING_SCHEME_1 = 0x00000000;
+
+/** Luna vendor: limit how many crypto ops a key may perform */
+const CKA_USAGE_LIMIT = 0x80000200;
+
+/** Luna Crypto User (CKU_CRYPTO_USER / limited user) */
+const CKU_CRYPTO_USER = 0x80000001;
+
+/** Encode a number as a little-endian CK_ULONG Buffer for raw PKCS#11 calls. */
+function ulong(n) {
+  const b = Buffer.alloc(CK_ULONG_SIZE);
+  if (CK_ULONG_SIZE === 4) {
+    b.writeUInt32LE(n >>> 0, 0);
+  } else {
+    b.writeBigUInt64LE(BigInt(n >>> 0), 0);
+  }
+  return b;
+}
+
+/** @deprecated Prefer ulong(); kept as alias for call-site compatibility. */
+const u32 = ulong;
+
+function getP11Lib() {
+  return process.env.P11_LIB || DEFAULT_P11_LIB;
+}
+
+function requireP11Lib() {
+  if (!process.env.P11_LIB) {
+    console.log("*** P11_LIB environment variable not set — using default. ***");
+    console.log("> set P11_LIB=" + DEFAULT_P11_LIB + "\n");
+  }
+  return getP11Lib();
+}
+
+function prompt(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer);
+    });
+  });
+}
+
+/** Prompt without echoing characters (best-effort). */
+function promptSecret(question) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return prompt(question);
+  }
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    const stdout = process.stdout;
+    stdout.write(question);
+    stdin.resume();
+    stdin.setRawMode(true);
+    stdin.setEncoding("utf8");
+    let value = "";
+    const onData = (char) => {
+      if (char === "\n" || char === "\r" || char === "\u0004") {
+        stdin.setRawMode(false);
+        stdin.pause();
+        stdin.removeListener("data", onData);
+        stdout.write("\n");
+        resolve(value);
+        return;
+      }
+      if (char === "\u0003") {
+        stdin.setRawMode(false);
+        process.exit(1);
+      }
+      if (char === "\u007f" || char === "\b") {
+        if (value.length) {
+          value = value.slice(0, -1);
+          stdout.clearLine(0);
+          stdout.cursorTo(0);
+          stdout.write(question);
+        }
+        return;
+      }
+      value += char;
+      stdout.write("*");
+    };
+    stdin.on("data", onData);
+  });
+}
+
+async function getPin(promptText = "Crypto Officer Password: ") {
+  if (process.env.LUNA_PIN) return process.env.LUNA_PIN;
+  return promptSecret(promptText);
+}
+
+async function getCuPin(promptText = "Crypto User Password: ") {
+  if (process.env.LUNA_CU_PIN) return process.env.LUNA_CU_PIN;
+  return promptSecret(promptText);
+}
+
+async function getPlaintext(promptText = "Enter plaintext: ", maxLen) {
+  let text = process.env.SAMPLE_PLAINTEXT;
+  if (text == null || text === "") {
+    text = await prompt(promptText);
+  }
+  if (maxLen != null && Buffer.byteLength(text, "utf8") > maxLen) {
+    throw new Error(`Plaintext too long (max ${maxLen} bytes).`);
+  }
+  return text;
+}
+
+function findSlotByLabel(mod, label) {
+  const slots = mod.getSlots(true);
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots.items(i);
+    try {
+      const tokenLabel = String(slot.getToken().label).trim();
+      if (tokenLabel === label) return slot;
+    } catch (_) {
+      /* skip */
+    }
+  }
+  return null;
+}
+
+function findObjectsByLabel(session, label, objectClass) {
+  const template = { label };
+  if (objectClass != null) template.class = objectClass;
+  const objs = session.find(template);
+  const out = [];
+  for (let i = 0; i < objs.length; i++) out.push(objs.items(i));
+  return out;
+}
+
+function findKeyByLabel(session, label, objectClass) {
+  const objs = findObjectsByLabel(session, label, objectClass);
+  if (!objs.length) throw new Error(`${label} not found.`);
+  return objs[0];
+}
+
+/**
+ * Load module, open RW session, login, run fn(session, mod, slot), then cleanup.
+ * @param {object} [opts]
+ * @param {number} [opts.userType] - graphene UserType or Luna CKU_CRYPTO_USER
+ * @param {string} [opts.pin] - override PIN (otherwise LUNA_PIN / prompt)
+ */
+async function withSession(slotLabel, fn, opts = {}) {
+  const pkcs11Library = requireP11Lib();
+  const userType =
+    opts.userType != null ? opts.userType : graphene.UserType.USER;
+  const pin =
+    opts.pin != null
+      ? opts.pin
+      : userType === CKU_CRYPTO_USER
+        ? await getCuPin()
+        : await getPin();
+
+  const mod = graphene.Module.load(pkcs11Library, "Luna");
+  mod.initialize();
+
+  try {
+    console.log("PKCS11 library found at : ", pkcs11Library);
+
+    const slot = findSlotByLabel(mod, slotLabel);
+    if (!slot) {
+      console.log("Incorrect token label.\n");
+      process.exitCode = 1;
+      return;
+    }
+    console.log("Token found : ", slotLabel);
+
+    const session = slot.open(
+      graphene.SessionFlag.RW_SESSION | graphene.SessionFlag.SERIAL_SESSION
+    );
+    try {
+      session.login(pin, userType);
+      console.log("Login success.");
+      await fn(session, mod, slot);
+    } finally {
+      try {
+        session.logout();
+      } catch (_) {
+        /* already logged out */
+      }
+      session.close();
+    }
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    const code = err && err.code != null ? err.code : null;
+    // HSM/policy/env limits — sample is OK; partition rejected the operation.
+    const envSkip =
+      code === 258 /* CKR_USER_PIN_NOT_INITIALIZED */ ||
+      code === 112 /* CKR_MECHANISM_INVALID */ ||
+      code === 105 /* CKR_KEY_NOT_WRAPPABLE */ ||
+      code === 84 /* CKR_FUNCTION_NOT_SUPPORTED */ ||
+      /CKR_USER_PIN_NOT_INITIALIZED|CKR_MECHANISM_INVALID|CKR_KEY_NOT_WRAPPABLE|CKR_FUNCTION_NOT_SUPPORTED/i.test(
+        msg
+      );
+    if (/CKR_PIN_INCORRECT|PIN_INCORRECT|pin incorrect/i.test(msg)) {
+      console.log("Incorrect pin.\n");
+      process.exitCode = 1;
+    } else if (envSkip) {
+      console.log(
+        "HSM rejected the operation (policy / FIPS / role not initialized)."
+      );
+      if (code === 258) {
+        console.log(
+          "Crypto User PIN is not initialized on this partition (set LUNA_CU_PIN after initializing CU)."
+        );
+      }
+      console.log("Detail:", msg, code != null ? "(code " + code + ")" : "");
+      console.log();
+      process.exitCode = 2;
+    } else {
+      console.error(err);
+      process.exitCode = 1;
+    }
+  } finally {
+    try {
+      mod.finalize();
+    } catch (_) {
+      /* ignore */
+    }
+  }
+}
+
+/** C_SeedRandom — not supported on some Cloud HSM images. */
+function seedRandom(session, seedBuf) {
+  session.lib.C_SeedRandom(session.handle, Buffer.from(seedBuf));
+}
+
+function usageAndExit(lines) {
+  for (const line of lines) console.log(line);
+  process.exit(1);
+}
+
+function toHex(buf) {
+  return Buffer.from(buf).toString("hex");
+}
+
+module.exports = {
+  graphene,
+  CKM_AES_KW,
+  CKM_AES_KWP,
+  CKM_DES3_CMAC,
+  CKM_SHA3_256,
+  CKM_SHAKE_256,
+  CKM_EC_EDWARDS_KEY_PAIR_GEN,
+  CKM_EDDSA,
+  CKK_EC_EDWARDS,
+  ED25519_EC_PARAMS,
+  CKM_PKCS5_PBKD2,
+  CKM_NIST_PRF_KDF,
+  CK_NIST_PRF_KDF_AES_CMAC,
+  LUNA_PRF_KDF_ENCODING_SCHEME_1,
+  CKA_USAGE_LIMIT,
+  CKU_CRYPTO_USER,
+  CK_ULONG_SIZE,
+  ulong,
+  u32,
+  DEFAULT_P11_LIB,
+  getP11Lib,
+  requireP11Lib,
+  prompt,
+  promptSecret,
+  getPin,
+  getCuPin,
+  getPlaintext,
+  findSlotByLabel,
+  findObjectsByLabel,
+  findKeyByLabel,
+  withSession,
+  seedRandom,
+  usageAndExit,
+  toHex,
+};
