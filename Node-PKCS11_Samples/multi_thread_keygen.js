@@ -9,10 +9,12 @@
  *********************************************************************************
 
  * OBJECTIVE:
- * - Multi-session parallel RSA keypair generation (same model as multi_thread_signing).
+ * - Multi-session parallel key generation.
+ *   Node port of C_Samples/generating_keys/MultiThread_KeyGen_demo.c.
+ * - Algorithms: AES-256, RSA-2048, ECDSA P-256, Ed25519.
  * - Main: C_Initialize once, login once. Workers: C_OpenSession, generate, close.
- * - Optional --compare mode: time single-thread vs multi-thread for N keypairs.
- * - Optional --token: store keypairs on the token (kept; print labels). Add --cleanup to destroy.
+ * - Optional --compare mode: time single-thread vs multi-thread for N keys.
+ * - Optional --token: store keys on the token (kept; print labels). Add --cleanup to destroy.
  * - Default: session objects (token=false) that vanish when sessions close.
  */
 
@@ -24,9 +26,20 @@ const {
   findSlotByLabel,
   getPin,
   usageAndExit,
+  CKM_EC_EDWARDS_KEY_PAIR_GEN,
+  CKK_EC_EDWARDS,
+  ED25519_EC_PARAMS,
+  P256_EC_PARAMS,
 } = require("./lib/helper");
 
 const KEY_BITS = 2048;
+const ALGS = ["aes", "rsa", "ecdsa", "eddsa"];
+const ALG_NAMES = {
+  aes: "AES-256",
+  rsa: "RSA-" + KEY_BITS,
+  ecdsa: "ECDSA P-256",
+  eddsa: "Ed25519",
+};
 
 function safeInitialize(mod) {
   try {
@@ -37,19 +50,81 @@ function safeInitialize(mod) {
   }
 }
 
-function generateRsaKeypair(session, label, onToken) {
+/** Generate one key (AES) or keypair (RSA / ECDSA / EdDSA), matching MultiThread_KeyGen_demo.c. */
+function generateOne(session, alg, label, onToken) {
+  if (alg === "aes") {
+    return session.generateKey(graphene.KeyGenMechanism.AES, {
+      keyType: graphene.KeyType.AES,
+      valueLen: 32,
+      label,
+      token: onToken,
+      private: true,
+      sensitive: true,
+      encrypt: true,
+      decrypt: true,
+    });
+  }
+
+  if (alg === "rsa") {
+    return session.generateKeyPair(
+      graphene.KeyGenMechanism.RSA,
+      {
+        keyType: graphene.KeyType.RSA,
+        modulusBits: KEY_BITS,
+        publicExponent: Buffer.from([0x01, 0x00, 0x01]),
+        label,
+        token: onToken,
+        verify: true,
+        encrypt: true,
+      },
+      {
+        keyType: graphene.KeyType.RSA,
+        label,
+        token: onToken,
+        private: true,
+        sensitive: true,
+        sign: true,
+        decrypt: true,
+        extractable: false,
+      }
+    );
+  }
+
+  if (alg === "ecdsa") {
+    return session.generateKeyPair(
+      graphene.KeyGenMechanism.ECDSA,
+      {
+        keyType: graphene.KeyType.ECDSA,
+        paramsEC: P256_EC_PARAMS,
+        label,
+        token: onToken,
+        verify: true,
+      },
+      {
+        keyType: graphene.KeyType.ECDSA,
+        label,
+        token: onToken,
+        private: true,
+        sensitive: true,
+        sign: true,
+        extractable: false,
+      }
+    );
+  }
+
   return session.generateKeyPair(
-    graphene.KeyGenMechanism.RSA,
+    { name: CKM_EC_EDWARDS_KEY_PAIR_GEN },
     {
-      keyType: graphene.KeyType.RSA,
-      modulusBits: KEY_BITS,
-      publicExponent: Buffer.from([0x01, 0x00, 0x01]),
+      class: graphene.ObjectClass.PUBLIC_KEY,
+      keyType: CKK_EC_EDWARDS,
+      paramsEC: ED25519_EC_PARAMS,
       label,
       token: onToken,
       verify: true,
     },
     {
-      keyType: graphene.KeyType.RSA,
+      class: graphene.ObjectClass.PRIVATE_KEY,
+      keyType: CKK_EC_EDWARDS,
       label,
       token: onToken,
       private: true,
@@ -74,13 +149,16 @@ function objectLabel(obj) {
   }
 }
 
-/** Destroy pub/priv objects whose labels start with prefix (token objects). */
+const KEY_CLASSES = [
+  graphene.ObjectClass.PUBLIC_KEY,
+  graphene.ObjectClass.PRIVATE_KEY,
+  graphene.ObjectClass.SECRET_KEY,
+];
+
+/** Destroy key objects whose labels start with prefix (token objects). */
 function destroyKeysByPrefix(session, prefix) {
   let destroyed = 0;
-  for (const cls of [
-    graphene.ObjectClass.PUBLIC_KEY,
-    graphene.ObjectClass.PRIVATE_KEY,
-  ]) {
+  for (const cls of KEY_CLASSES) {
     const objs = session.find({ class: cls, token: true });
     // Snapshot handles/labels first — destroy mutates the find set.
     const matches = [];
@@ -97,14 +175,11 @@ function destroyKeysByPrefix(session, prefix) {
   return destroyed;
 }
 
-/** Destroy pub+priv for each exact label (preferred when labels are known). */
+/** Destroy every key object for each exact label (preferred when labels are known). */
 function destroyKeysByLabels(session, labels) {
   let destroyed = 0;
   for (const label of labels) {
-    for (const cls of [
-      graphene.ObjectClass.PUBLIC_KEY,
-      graphene.ObjectClass.PRIVATE_KEY,
-    ]) {
+    for (const cls of KEY_CLASSES) {
       const objs = session.find({ class: cls, label, token: true });
       for (let i = 0; i < objs.length; i++) {
         objs.items(i).destroy();
@@ -117,7 +192,7 @@ function destroyKeysByLabels(session, labels) {
 
 if (!isMainThread) {
   (async () => {
-    const { p11Lib, slotLabel, keysPerThread, threadId, runId, onToken } =
+    const { p11Lib, slotLabel, keysPerThread, threadId, runId, onToken, alg } =
       workerData;
     const mod = graphene.Module.load(p11Lib, "Luna");
     safeInitialize(mod);
@@ -131,7 +206,7 @@ if (!isMainThread) {
       const t0 = process.hrtime.bigint();
       for (let i = 0; i < keysPerThread; i++) {
         const label = "NodeMTKG_" + runId + "_t" + threadId + "_" + i;
-        generateRsaKeypair(session, label, onToken);
+        generateOne(session, alg, label, onToken);
         labels.push(label);
       }
       const ms = Number(process.hrtime.bigint() - t0) / 1e6;
@@ -158,17 +233,22 @@ if (!isMainThread) {
 function usage() {
   usageAndExit([
     "Usage:",
-    "node multi_thread_keygen.js <slot_label> <num_threads> <keys_per_thread> [--token] [--cleanup]",
-    "node multi_thread_keygen.js <slot_label> --compare <total_keys> [--token] [--cleanup]",
+    "node multi_thread_keygen.js <slot_label> <num_threads> <keys_per_thread> [--alg <alg>] [--token] [--cleanup]",
+    "node multi_thread_keygen.js <slot_label> --compare <total_keys> [--alg <alg>] [--token] [--cleanup]",
     "",
+    "--alg     : aes | rsa | ecdsa | eddsa   (default: rsa)",
+    "            aes   = AES-256 secret keys",
+    "            rsa   = RSA-" + KEY_BITS + " keypairs",
+    "            ecdsa = ECDSA P-256 (secp256r1) keypairs",
+    "            eddsa = Ed25519 keypairs",
     "--token   : CKA_TOKEN=true (keys persist on the partition)",
     "--cleanup : destroy generated token keys at the end (only with --token)",
     "",
     "Examples:",
     "node multi_thread_keygen.js myPartition 4 2",
-    "node multi_thread_keygen.js myPartition 10 1 --token",
-    "node multi_thread_keygen.js myPartition 10 1 --token --cleanup",
-    "node multi_thread_keygen.js myPartition --compare 5\n",
+    "node multi_thread_keygen.js myPartition 4 10 --alg aes",
+    "node multi_thread_keygen.js myPartition 10 1 --alg eddsa --token --cleanup",
+    "node multi_thread_keygen.js myPartition --compare 5 --alg ecdsa\n",
   ]);
 }
 
@@ -177,7 +257,26 @@ console.log("\nmulti_thread_keygen.js\n");
 const argv = process.argv.slice(2);
 const onToken = argv.includes("--token");
 const doCleanup = argv.includes("--cleanup");
-const args = argv.filter((a) => a !== "--token" && a !== "--cleanup");
+
+let alg = "rsa";
+const algFlag = argv.indexOf("--alg");
+if (algFlag !== -1) {
+  alg = String(argv[algFlag + 1] || "").toLowerCase();
+  if (!ALGS.includes(alg)) {
+    console.error(
+      `Unknown alg '${argv[algFlag + 1]}'. Use ${ALGS.join(", ")}.\n`
+    );
+    process.exit(1);
+  }
+}
+
+const args = argv.filter(
+  (a, i) =>
+    a !== "--token" &&
+    a !== "--cleanup" &&
+    a !== "--alg" &&
+    !(algFlag !== -1 && i === algFlag + 1)
+);
 if (doCleanup && !onToken) {
   console.error("--cleanup requires --token.\n");
   process.exit(1);
@@ -228,6 +327,7 @@ function runWorkers(p11Lib, threads, kpt, runId) {
             threadId: i,
             runId,
             onToken,
+            alg,
           },
         });
         w.on("message", done);
@@ -255,7 +355,7 @@ function summarize(label, results, wallMs) {
         r.threadId,
         "generated",
         r.keys,
-        "keypair(s) in",
+        "key(s) in",
         r.ms.toFixed(1),
         "ms"
       );
@@ -269,9 +369,9 @@ function summarize(label, results, wallMs) {
     "\n>",
     label + ":",
     keys,
-    "RSA-" + KEY_BITS,
+    ALG_NAMES[alg],
     kind,
-    "keypairs in",
+    "keys in",
     wallMs.toFixed(1),
     "ms wall time",
     failed ? "(" + failed + " thread(s) failed)" : ""
@@ -279,7 +379,7 @@ function summarize(label, results, wallMs) {
   console.log(
     "  avg",
     keys ? (wallMs / keys).toFixed(1) : "n/a",
-    "ms per keypair (wall)\n"
+    "ms per key (wall)\n"
   );
   return { failed, keys, wallMs };
 }
@@ -307,11 +407,7 @@ function summarize(label, results, wallMs) {
     session.login(pin, graphene.UserType.USER);
     console.log("Login success.");
     console.log(
-      "Generating RSA-" +
-        KEY_BITS +
-        " keypairs (token=" +
-        onToken +
-        ").\n"
+      "Generating " + ALG_NAMES[alg] + " keys (token=" + onToken + ").\n"
     );
 
     if (compareMode) {
@@ -322,7 +418,7 @@ function summarize(label, results, wallMs) {
       console.log("--- Single-thread (" + totalKeys + " keys on 1 session) ---");
       let t0 = process.hrtime.bigint();
       for (let i = 0; i < totalKeys; i++) {
-        generateRsaKeypair(session, prefixSingle + "_" + i, onToken);
+        generateOne(session, alg, prefixSingle + "_" + i, onToken);
         console.log("  --> key", i + 1 + "/" + totalKeys, "generated");
       }
       const singleMs = Number(process.hrtime.bigint() - t0) / 1e6;
@@ -330,13 +426,13 @@ function summarize(label, results, wallMs) {
       console.log(
         "\n> single-thread:",
         totalKeys,
-        "RSA-" + KEY_BITS,
+        ALG_NAMES[alg],
         kind,
-        "keypairs in",
+        "keys in",
         singleMs.toFixed(1),
         "ms"
       );
-      console.log("  avg", (singleMs / totalKeys).toFixed(1), "ms per keypair\n");
+      console.log("  avg", (singleMs / totalKeys).toFixed(1), "ms per key\n");
 
       if (onToken && doCleanup) {
         const n = destroyKeysByPrefix(session, prefixSingle);
@@ -380,7 +476,7 @@ function summarize(label, results, wallMs) {
         console.log(
           "Token keys kept:",
           kept.length,
-          "keypair(s). Prefix",
+          "key(s). Prefix",
           prefixMulti + ". Use --cleanup to destroy.\n"
         );
         activeRunPrefix = null;
@@ -397,7 +493,7 @@ function summarize(label, results, wallMs) {
       const speedupWall = multiWall > 0 ? singleMs / multiWall : 0;
       const speedupSpan = multiSpan > 0 ? singleMs / multiSpan : 0;
       console.log(
-        "=== Comparison (" + totalKeys + " RSA-" + KEY_BITS + " keypairs) ==="
+        "=== Comparison (" + totalKeys + " " + ALG_NAMES[alg] + " keys) ==="
       );
       console.log("  single-thread          :", singleMs.toFixed(1), "ms");
       console.log(
@@ -429,7 +525,7 @@ function summarize(label, results, wallMs) {
       nThreads,
       "worker threads,",
       keysPerThread,
-      "keypair(s) each.\n"
+      ALG_NAMES[alg] + " key(s) each.\n"
     );
     const t0 = process.hrtime.bigint();
     const results = await runWorkers(p11Lib, nThreads, keysPerThread, runId);
@@ -458,7 +554,7 @@ function summarize(label, results, wallMs) {
           "Token cleanup: destroyed",
           n,
           "object(s)",
-          labels.length ? "(" + labels.length + " keypair labels)" : "",
+          labels.length ? "(" + labels.length + " key labels)" : "",
           "\n"
         );
       } else {

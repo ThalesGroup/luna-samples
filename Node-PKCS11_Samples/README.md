@@ -46,7 +46,12 @@ node digest_using_shake_256.js myPartition 50
 node sign_using_eddsa.js myPartition
 node usage_limit_demo.js myPartition 3
 node multi_thread_signing.js myPartition 4 10
+node multi_thread_keygen.js myPartition 4 10 --alg aes
 node multi_thread_keygen.js myPartition --compare 5
+node slip10_derive.js myPartition ed25519 4
+node slip10_derive.js myPartition ed25519 4 my-slip10-seed
+node slip10_bulk_master.js myPartition secp256k1 4
+node slip10_bulk_master.js myPartition secp256k1 4 wallet
 node pqc_mechanism_probe.js myPartition
 node pqc_mldsa_sign_verify.js myPartition
 ```
@@ -84,7 +89,10 @@ node pqc_mlkem_encapsulate_decapsulate.js myPartition 768
 | Ed25519 (Edwards / EDDSA) | Covered (`generate_eddsa_keypair.js`, `sign_using_eddsa.js`) |
 | Usage limit (`CKA_USAGE_LIMIT`) | Covered (`usage_limit_demo.js`) |
 | Multi-thread signing | Covered (`multi_thread_signing.js`) |
-| Multi-thread keygen (+ compare) | Covered (`multi_thread_keygen.js`) |
+| Bulk multi-thread keygen, AES / RSA / ECDSA / EdDSA (+ compare) | Covered (`multi_thread_keygen.js`, port of `MultiThread_KeyGen_demo.c`) |
+| SLIP-10 HD derivation, secp256k1 / P-256 / Ed25519 | Covered (`slip10_derive.js`, port of `SLIP10_Derive_demo.c`) |
+| Persistent SLIP-10 seed, same tree rebuilt on a later run | Covered (optional `seed_label` argument on `slip10_derive.js`) |
+| Bulk SLIP-10 masters, one seed per thread | Covered (`slip10_bulk_master.js`, port of `SLIP10_Bulk_Master_demo.c`) |
 | Object mgmt (create/find/list/get/set/copy/destroy) | Covered |
 | Import known secret key (`CreateKnownKeys`) | `create_known_keys.js` |
 | Key derivation (SHA256, ECDH) | Covered |

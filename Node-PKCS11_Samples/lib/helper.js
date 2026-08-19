@@ -45,6 +45,31 @@ const ED25519_EC_PARAMS = Buffer.from([
   0x06, 0x09, 0x2b, 0x06, 0x01, 0x04, 0x01, 0xda, 0x47, 0x0f, 0x01,
 ]);
 
+/**
+ * BIP-32 / SLIP-10. Luna has no CKM_SLIP10_*: SLIP-10 is selected by calling
+ * the BIP32 mechanisms with CKA_ECDSA_PARAMS set to a SLIP-10 curve. Omitting
+ * that attribute gives classic BIP-32 secp256k1 only. Needs firmware 7.8.7+.
+ */
+const CKM_BIP32_MASTER_DERIVE = 0x80000e00;
+const CKM_BIP32_CHILD_DERIVE = 0x80000e01;
+const CKK_BIP32 = 0x80000014;
+const CKA_BIP32_VERSION_BYTES = 0x80001101;
+const CKA_ECDSA_PARAMS = 0x00000180;
+const CKF_BIP32_HARDENED = 0x80000000;
+const CKG_BIP44_PURPOSE = 0x0000002c;
+const CKG_BIP44_COIN_TYPE_BTC = 0x00000000;
+const CKG_BIP32_EXTERNAL_CHAIN = 0x00000000;
+/** Mainnet version bytes, big-endian, as they appear in xpub / xprv. */
+const BIP32_VERSION_MAINNET_PUB = Buffer.from([0x04, 0x88, 0xb2, 0x1e]);
+const BIP32_VERSION_MAINNET_PRIV = Buffer.from([0x04, 0x88, 0xad, 0xe4]);
+/** SLIP-10 named-curve OIDs (DER). Ed25519 reuses ED25519_EC_PARAMS above. */
+const SECP256K1_EC_PARAMS = Buffer.from([
+  0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x0a,
+]);
+const P256_EC_PARAMS = Buffer.from([
+  0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+]);
+
 const CKM_PKCS5_PBKD2 = 0x000003b0;
 const CKM_NIST_PRF_KDF = 0x80000a02;
 const CK_NIST_PRF_KDF_AES_CMAC = 0x00000002;
@@ -298,6 +323,19 @@ module.exports = {
   CKM_EDDSA,
   CKK_EC_EDWARDS,
   ED25519_EC_PARAMS,
+  CKM_BIP32_MASTER_DERIVE,
+  CKM_BIP32_CHILD_DERIVE,
+  CKK_BIP32,
+  CKA_BIP32_VERSION_BYTES,
+  CKA_ECDSA_PARAMS,
+  CKF_BIP32_HARDENED,
+  CKG_BIP44_PURPOSE,
+  CKG_BIP44_COIN_TYPE_BTC,
+  CKG_BIP32_EXTERNAL_CHAIN,
+  BIP32_VERSION_MAINNET_PUB,
+  BIP32_VERSION_MAINNET_PRIV,
+  SECP256K1_EC_PARAMS,
+  P256_EC_PARAMS,
   CKM_PKCS5_PBKD2,
   CKM_NIST_PRF_KDF,
   CK_NIST_PRF_KDF_AES_CMAC,
